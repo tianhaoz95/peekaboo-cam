@@ -33,6 +33,11 @@ targets:
           NSAllowsLocalNetworking: true
           NSAllowsArbitraryLoads: true
         UILaunchScreen: {}
+        LSApplicationQueriesSchemes:
+          - prefs
+          - app-prefs
+          - App-prefs
+          - App-Prefs
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.hejitech.kidscam

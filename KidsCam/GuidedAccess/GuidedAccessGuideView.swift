@@ -14,28 +14,42 @@ public struct GuidedAccessGuideView: View {
                     statusBanner
 
                     // Quick Action Button to Settings
-                    Button(action: {
-                        SoundEffectManager.shared.play(.pop)
-                        guidedManager.openGuidedAccessSettings()
-                    }) {
-                        HStack {
-                            Image(systemName: "gear")
-                                .font(.system(size: 20, weight: .bold))
-                            Text("Open iOS Settings App")
-                                .font(.system(size: 18, weight: .bold, design: .rounded))
-                        }
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            LinearGradient(
-                                colors: [Color.blue, Color.purple],
-                                startPoint: .leading,
-                                endPoint: .trailing
+                    VStack(spacing: 8) {
+                        Button(action: {
+                            SoundEffectManager.shared.play(.pop)
+                            guidedManager.openGuidedAccessSettings()
+                        }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "arrow.up.forward.app.fill")
+                                    .font(.system(size: 18, weight: .bold))
+                                Text("Open Settings: Accessibility ➔ Guided Access")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color.blue, Color.purple],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
                             )
-                        )
-                        .cornerRadius(20)
-                        .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                            .cornerRadius(20)
+                            .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                        }
+
+                        // Path indicator and Search Tip
+                        HStack(spacing: 6) {
+                            Image(systemName: "info.circle.fill")
+                                .foregroundColor(.blue)
+                                .font(.system(size: 13))
+                            Text("Opens Settings: Tap **Accessibility** ➔ **Guided Access** (or paste 'Guided Access' into Settings Search)")
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.leading)
+                        }
+                        .padding(.horizontal, 4)
                     }
                     .padding(.horizontal, 20)
 
@@ -50,9 +64,9 @@ public struct GuidedAccessGuideView: View {
 
                         stepCard(
                             stepNumber: "1",
-                            title: "Open Settings > Accessibility",
-                            detail: "Tap the button above, or open Settings on your iPhone and scroll down to Accessibility.",
-                            icon: "hand.tap.fill",
+                            title: "Tap 'Accessibility' in Settings",
+                            detail: "In the Settings list, tap Accessibility (with the blue figure icon), then scroll down and tap 'Guided Access'.",
+                            icon: "figure.arms.open",
                             iconColor: .blue
                         )
 

@@ -1,4 +1,5 @@
 import XCTest
+import SwiftUI
 @testable import ToddlerCam
 
 final class KidsCamTests: XCTestCase {
@@ -75,5 +76,29 @@ final class KidsCamTests: XCTestCase {
         let manager = GuidedAccessManager.shared
         // In unit test environment, UIAccessibility.isGuidedAccessEnabled is normally false
         XCTAssertFalse(manager.isGuidedAccessActive)
+    }
+
+    func testGuidedAccessManagerOpenSettings() {
+        let manager = GuidedAccessManager.shared
+        manager.openGuidedAccessSettings()
+        XCTAssertEqual(UIPasteboard.general.string, "Guided Access")
+    }
+
+    @MainActor
+    func testGuidedAccessGuideViewSnapshot() {
+        let view = GuidedAccessGuideView()
+        let controller = UIHostingController(rootView: view)
+        controller.view.bounds = CGRect(x: 0, y: 0, width: 440, height: 956)
+        controller.view.backgroundColor = .systemBackground
+        controller.view.layoutIfNeeded()
+        let renderer = UIGraphicsImageRenderer(size: controller.view.bounds.size)
+        let image = renderer.image { _ in
+            controller.view.drawHierarchy(in: controller.view.bounds, afterScreenUpdates: true)
+        }
+        XCTAssertGreaterThan(image.size.width, 0)
+        if let data = image.pngData() {
+            let path = "/Users/tianhaoz/.gemini/antigravity-cli/brain/04e94b9a-263a-4ac8-8a99-d26f65ce8b13/guided_access_sheet_snapshot.png"
+            try? data.write(to: URL(fileURLWithPath: path))
+        }
     }
 }
