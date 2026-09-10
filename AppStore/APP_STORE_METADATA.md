@@ -58,19 +58,19 @@ Turn photography into a joyful interactive adventure with simultaneous front-and
 • Little fingers tapping the screen generate colorful popping bubbles, stars, and musical chirps without interrupting the live camera stream.
 • Child-proof Parental Gate (math challenge) ensures only grown-ups can access settings or camera roll.
 
-🖼️ APPLE WATCH FACE STUDIO
-• Turn your toddler's best dual photos into custom Apple Watch photo faces with a single tap!
-• Customize digital clock position (Top / Bottom), time colors, and complication layouts with an interactive watch face simulator.
-• Add ToddlerCam complications to your favorite Apple Watch face for instant one-tap camera access.
+✨ REAL-TIME APPLE VISION FACE MASKS (Controlled via Apple Watch)
+• Fun, interactive face masks (Crown, Lion, Sunglasses, Kitty, Puppy, Unicorn, Panda, Bunny, Star Eyes)!
+• Powered by native Apple Vision framework: masks dynamically track head movement and tilt with your child's head roll in real time!
+• Settings are exclusively on the parent's Apple Watch so the toddler's iPhone screen stays 100% clean, locked, and distraction-free.
 
-🎨 SILLY STICKERS & SOUNDS
-• Toddler-safe stickers: Tap to wear animal ears, golden crowns, cool sunglasses, and magic hats!
-• Cheerful sound effects with instant mute toggle for quiet environments.
+⌚️ APPLE WATCH COMPLICATIONS & REMOTE LAUNCHER
+• Add ToddlerCam complications to your favorite Apple Watch face for instant one-tap camera shutter or silly animal sounds.
+• Switch complications directly from the Watch Complications studio in Parent Hub.
 
 👶 100% PRIVATE & SAFE FOR KIDS
 • Built specifically for the App Store Kids Category (Ages 5 and Under).
 • ZERO data collection, ZERO tracking SDKs, and ZERO advertisements.
-• All camera feeds and photos are processed strictly on-device.
+• All camera feeds and Apple Vision face tracking are processed strictly on-device.
 ```
 
 ---
@@ -155,12 +155,12 @@ Contact Email: review-contact@hejitech.com
 * **Subhead:** Guided Access & bubble screen lock keep kids safely inside the app.
 * **Visual:** Bubble popping canvas with Guided Access active badge.
 
-### Slide 4 (Watch Face Studio)
-* **Headline:** Turn Dual Photos into Watch Faces
-* **Subhead:** Customize colors, complications, and create Apple Watch faces in seconds.
-* **Visual:** Watch Face Studio preview mockup showing photo watch face.
+### Slide 4 (Apple Watch Face Masks Remote)
+* **Headline:** Remote Face Tracking Masks
+* **Subhead:** Choose fun animal masks from your watch that track your toddler's smile!
+* **Visual:** Apple Watch Face Masks selector with toddler wearing lion mask on iPhone screen.
 
-### Slide 5 (Silly Stickers & Sounds)
-* **Headline:** Spark Playful Smiles
-* **Subhead:** Fun crowns, puppy ears, sunglasses, and cheerful giggles!
-* **Visual:** Stickers bar with crown and lion overlay on selfie camera.
+### Slide 5 (Watch Complications & Easy Shutter)
+* **Headline:** Watch Complications & Instant Shutter
+* **Subhead:** Add shortcuts to your watch face for instant captures and giggle sounds.
+* **Visual:** Apple Watch complications on modular face and quick shutter view.
