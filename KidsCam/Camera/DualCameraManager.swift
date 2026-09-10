@@ -92,6 +92,9 @@ public final class DualCameraManager: NSObject, ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] img in
                 self?.simulatedFrontFrame = img
+                if let frame = img {
+                    FaceTrackingManager.shared.processUIImage(frame)
+                }
             }
             .store(in: &cancellables)
 
@@ -366,14 +369,13 @@ public final class DualCameraManager: NSObject, ObservableObject {
             guard let self = self else { return }
 
             let backImg = self.simulatedRearFrame ?? self.captureCurrentVideoFrame(from: "rear_video") ?? DualPhotoRenderer.renderSimulatedBackCamera()
-            let frontImg = self.simulatedFrontFrame ?? self.captureCurrentVideoFrame(from: "front_video") ?? DualPhotoRenderer.renderSimulatedFrontCamera(sticker: self.activeSticker)
+            let frontImg = self.simulatedFrontFrame ?? self.captureCurrentVideoFrame(from: "front_video") ?? DualPhotoRenderer.renderSimulatedFrontCamera()
 
             let composite = DualPhotoRenderer.composeDualPhoto(
                 backImage: backImg,
                 frontImage: frontImg,
                 layout: self.layoutMode,
-                primaryPosition: self.primaryPosition,
-                sticker: self.activeSticker
+                primaryPosition: self.primaryPosition
             )
 
             let photo = CapturedDualPhoto(compositeImage: composite, frontImage: frontImg, backImage: backImg)
@@ -405,8 +407,7 @@ public final class DualCameraManager: NSObject, ObservableObject {
             backImage: back,
             frontImage: front,
             layout: self.layoutMode,
-            primaryPosition: self.primaryPosition,
-            sticker: self.activeSticker
+            primaryPosition: self.primaryPosition
         )
 
         let photo = CapturedDualPhoto(compositeImage: composite, frontImage: front, backImage: back)

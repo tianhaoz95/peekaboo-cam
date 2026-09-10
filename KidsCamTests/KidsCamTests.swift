@@ -31,7 +31,7 @@ final class KidsCamTests: XCTestCase {
 
     func testDualPhotoRendererComposition() {
         let back = DualPhotoRenderer.renderSimulatedBackCamera()
-        let front = DualPhotoRenderer.renderSimulatedFrontCamera(sticker: "👑")
+        let front = DualPhotoRenderer.renderSimulatedFrontCamera()
         XCTAssertNotNil(back)
         XCTAssertNotNil(front)
 
@@ -39,8 +39,7 @@ final class KidsCamTests: XCTestCase {
             backImage: back,
             frontImage: front,
             layout: .pip,
-            primaryPosition: .back,
-            sticker: "👑"
+            primaryPosition: .back
         )
         XCTAssertEqual(compositePip.size.width, 1200)
         XCTAssertEqual(compositePip.size.height, 1600)
@@ -49,8 +48,7 @@ final class KidsCamTests: XCTestCase {
             backImage: back,
             frontImage: front,
             layout: .pip,
-            primaryPosition: .front,
-            sticker: nil
+            primaryPosition: .front
         )
         XCTAssertEqual(compositeFrontPrimary.size.width, 1200)
         XCTAssertEqual(compositeFrontPrimary.size.height, 1600)
@@ -58,7 +56,7 @@ final class KidsCamTests: XCTestCase {
 
     func testWatchFaceExportDimensions() {
         let manager = WatchFaceManager.shared
-        let sample = DualPhotoRenderer.renderSimulatedFrontCamera(sticker: nil)
+        let sample = DualPhotoRenderer.renderSimulatedFrontCamera()
         let exported = manager.exportWatchFaceImage(from: sample)
         XCTAssertEqual(exported.size.width, 820)
         XCTAssertEqual(exported.size.height, 1004)
@@ -98,6 +96,77 @@ final class KidsCamTests: XCTestCase {
         XCTAssertGreaterThan(image.size.width, 0)
         if let data = image.pngData() {
             let path = "/Users/tianhaoz/.gemini/antigravity-cli/brain/04e94b9a-263a-4ac8-8a99-d26f65ce8b13/guided_access_sheet_snapshot.png"
+            try? data.write(to: URL(fileURLWithPath: path))
+        }
+    }
+
+    func testFaceEmojiTypeCatalog() {
+        for filter in FaceEmojiType.allCases {
+            XCTAssertFalse(filter.emoji.isEmpty)
+            XCTAssertFalse(filter.displayName.isEmpty)
+            XCTAssertFalse(filter.id.isEmpty)
+        }
+        XCTAssertEqual(FaceEmojiType.crown.anchorPosition, .forehead)
+        XCTAssertEqual(FaceEmojiType.sunglasses.anchorPosition, .eyes)
+        XCTAssertEqual(FaceEmojiType.lion.anchorPosition, .head)
+    }
+
+    func testFaceTrackingManagerFilterAndCoordinates() {
+        let manager = FaceTrackingManager.shared
+        manager.setActiveFilter(.lion)
+        XCTAssertEqual(manager.activeFilter, .lion)
+
+        let container = CGSize(width: 400, height: 600)
+        let anchor = manager.anchorPoint(for: .forehead, in: container)
+        XCTAssertGreaterThan(anchor.x, 0)
+        XCTAssertGreaterThan(anchor.y, 0)
+
+        let size = manager.emojiSize(in: container, for: .lion)
+        XCTAssertGreaterThan(size, 30)
+
+        manager.clearFilter()
+        XCTAssertNil(manager.activeFilter)
+    }
+
+    func testFaceTrackingManagerProcessImage() {
+        let manager = FaceTrackingManager.shared
+        manager.setActiveFilter(.crown)
+        let testImage = DualPhotoRenderer.renderSimulatedFrontCamera()
+        manager.processUIImage(testImage)
+        // Processing runs on background vision queue without throwing
+        XCTAssertEqual(manager.activeFilter, .crown)
+    }
+
+    func testDualPhotoRendererWithTrackedEmoji() {
+        let back = DualPhotoRenderer.renderSimulatedBackCamera()
+        let front = DualPhotoRenderer.renderSimulatedFrontCamera()
+
+        let composite = DualPhotoRenderer.composeDualPhoto(
+            backImage: back,
+            frontImage: front,
+            layout: .pip,
+            primaryPosition: .back,
+            filter: .lion
+        )
+        XCTAssertEqual(composite.size.width, 1200)
+        XCTAssertEqual(composite.size.height, 1600)
+    }
+
+    @MainActor
+    func testFaceTrackingOverlaySnapshot() {
+        FaceTrackingManager.shared.setActiveFilter(.crown)
+        let sampleFace = DualPhotoRenderer.renderSimulatedFrontCamera()
+        FaceTrackingManager.shared.processUIImage(sampleFace)
+
+        let composite = DualPhotoRenderer.composeDualPhoto(
+            backImage: DualPhotoRenderer.renderSimulatedBackCamera(),
+            frontImage: sampleFace,
+            layout: .pip,
+            primaryPosition: .front,
+            filter: .crown
+        )
+        if let data = composite.pngData() {
+            let path = "/Users/tianhaoz/.gemini/antigravity-cli/brain/04e94b9a-263a-4ac8-8a99-d26f65ce8b13/tracked_face_mask_photo.png"
             try? data.write(to: URL(fileURLWithPath: path))
         }
     }

@@ -44,17 +44,18 @@ public struct ToddlerControlBar: View {
                     }
                 }
 
-                // 2. Play Silly Animal Sound Button
+                // 2. Play Silly Sound Button
                 Button(action: {
                     let sound = soundOptions[soundIndex % soundOptions.count]
                     soundIndex += 1
                     SoundEffectManager.shared.play(sound)
                 }) {
-                    VStack(spacing: 2) {
-                        Text(soundOptions[soundIndex % soundOptions.count].emoji)
-                            .font(.system(size: 24))
+                    VStack(spacing: 3) {
+                        Image(systemName: "speaker.wave.2.fill")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(.white)
                         Text("Sound")
-                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                     }
                     .frame(width: 52, height: 52)

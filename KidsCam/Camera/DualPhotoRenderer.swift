@@ -9,7 +9,8 @@ public final class DualPhotoRenderer {
         frontImage: UIImage,
         layout: CameraLayoutMode,
         primaryPosition: ActiveCameraPosition,
-        sticker: String?
+        filter: FaceEmojiType? = FaceTrackingManager.shared.activeFilter,
+        sticker: String? = nil
     ) -> UIImage {
         let size = CGSize(width: 1200, height: 1600)
         let format = UIGraphicsImageRendererFormat()
@@ -47,12 +48,21 @@ public final class DualPhotoRenderer {
             borderPath.lineWidth = 6
             borderPath.stroke()
 
-            // Draw sticker if present
-            if let st = sticker {
-                let font = UIFont.systemFont(ofSize: 140)
+            // Draw Vision-tracked face emoji mask if active
+            if let active = filter {
+                let isFrontPrimary = (primaryPosition == .front)
+                let targetRect = isFrontPrimary ? CGRect(origin: .zero, size: size) : pipRect
+                let anchor = FaceTrackingManager.shared.anchorPoint(for: active.anchorPosition, in: targetRect.size)
+                let emojiPt = CGPoint(x: targetRect.origin.x + anchor.x, y: targetRect.origin.y + anchor.y)
+                let rawSize = FaceTrackingManager.shared.emojiSize(in: targetRect.size, for: active)
+                let emojiFontSize = isFrontPrimary ? rawSize : (rawSize * 0.9)
+
+                let font = UIFont.systemFont(ofSize: emojiFontSize)
                 let attrs: [NSAttributedString.Key: Any] = [.font: font]
-                let stStr = NSString(string: st)
-                stStr.draw(at: CGPoint(x: 50, y: size.height - 240), withAttributes: attrs)
+                let str = NSString(string: active.emoji)
+                let strSize = str.size(withAttributes: attrs)
+                let drawOrigin = CGPoint(x: emojiPt.x - (strSize.width / 2.0), y: emojiPt.y - (strSize.height / 2.0))
+                str.draw(at: drawOrigin, withAttributes: attrs)
             }
 
             // Watermark ribbon at bottom
@@ -143,7 +153,7 @@ public final class DualPhotoRenderer {
         }
     }
 
-    public static func renderSimulatedFrontCamera(sticker: String?) -> UIImage {
+    public static func renderSimulatedFrontCamera(sticker: String? = nil) -> UIImage {
         let size = CGSize(width: 800, height: 1000)
         return UIGraphicsImageRenderer(size: size).image { ctx in
             let cg = ctx.cgContext
@@ -188,14 +198,6 @@ public final class DualPhotoRenderer {
             cg.fillEllipse(in: CGRect(x: 280, y: 270, width: 90, height: 90))
             cg.fillEllipse(in: CGRect(x: 350, y: 250, width: 100, height: 90))
             cg.fillEllipse(in: CGRect(x: 430, y: 270, width: 90, height: 90))
-
-            // Sticker if active
-            if let st = sticker {
-                let font = UIFont.systemFont(ofSize: 110)
-                let attrs: [NSAttributedString.Key: Any] = [.font: font]
-                let stStr = NSString(string: st)
-                stStr.draw(at: CGPoint(x: 340, y: 190), withAttributes: attrs)
-            }
 
             // Label
             let str = NSString(string: "👶 Toddler Selfie")

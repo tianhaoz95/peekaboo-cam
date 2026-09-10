@@ -34,6 +34,13 @@ public final class WatchConnectivityManager: NSObject, ObservableObject {
                 self?.syncStateToWatch()
             }
             .store(in: &cancellables)
+
+        // Observe active face emoji mask to sync to watch
+        FaceTrackingManager.shared.$activeFilter
+            .sink { [weak self] _ in
+                self?.syncStateToWatch()
+            }
+            .store(in: &cancellables)
     }
 
     public func syncStateToWatch() {
@@ -45,6 +52,7 @@ public final class WatchConnectivityManager: NSObject, ObservableObject {
             "isToddlerLocked": DualCameraManager.shared.isToddlerLocked,
             "layoutMode": DualCameraManager.shared.layoutMode.rawValue,
             "primaryPosition": (DualCameraManager.shared.primaryPosition == .back) ? "back" : "front",
+            "activeFaceEmoji": FaceTrackingManager.shared.activeFilter?.rawValue ?? "none",
             "timestamp": Date().timeIntervalSince1970
         ]
         try? session.updateApplicationContext(context)
@@ -135,12 +143,22 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 DualCameraManager.shared.toggleToddlerLock()
                 replyHandler(["status": "ok", "isLocked": DualCameraManager.shared.isToddlerLocked])
 
+            case "setFaceEmoji":
+                if let emojiRaw = message["emoji"] as? String, let filter = FaceEmojiType(rawValue: emojiRaw) {
+                    FaceTrackingManager.shared.setActiveFilter(filter)
+                    replyHandler(["status": "ok", "activeEmoji": filter.rawValue])
+                } else {
+                    FaceTrackingManager.shared.clearFilter()
+                    replyHandler(["status": "ok", "activeEmoji": "none"])
+                }
+
             case "requestStatus":
                 replyHandler([
                     "status": "ok",
                     "isToddlerLocked": DualCameraManager.shared.isToddlerLocked,
                     "layoutMode": DualCameraManager.shared.layoutMode.rawValue,
-                    "isMultiCamSupported": DualCameraManager.shared.isMultiCamSupported
+                    "isMultiCamSupported": DualCameraManager.shared.isMultiCamSupported,
+                    "activeFaceEmoji": FaceTrackingManager.shared.activeFilter?.rawValue ?? "none"
                 ])
 
             default:

@@ -35,10 +35,6 @@ public struct ToddlerCameraView: View {
 
                     Spacer()
 
-                    // Fun Sticker Overlay Selector
-                    StickersOverlayView()
-                        .padding(.bottom, 8)
-
                     // Bottom Toddler Control Bar
                     ToddlerControlBar(
                         onOpenGallery: {

@@ -37,7 +37,7 @@ public final class WatchFaceManager: ObservableObject {
 
     public init() {
         // Default preview photo: render simulated toddler selfie if no photo taken yet
-        self.selectedPhoto = DualPhotoRenderer.renderSimulatedFrontCamera(sticker: "👑")
+        self.selectedPhoto = DualPhotoRenderer.renderSimulatedFrontCamera()
     }
 
     public func openAppleWatchApp() {

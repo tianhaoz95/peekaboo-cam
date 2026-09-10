@@ -142,12 +142,10 @@ public struct DualCameraPreviewView: View {
                 simulatorOrFallbackFeed(position: position, targetSize: targetSize)
             }
 
-            // Sticker Overlay if front position
-            if position == .front, let sticker = cameraManager.activeSticker {
-                Text(sticker)
-                    .font(.system(size: isPrimary ? 90 : 44))
-                    .shadow(radius: 6)
-                    .offset(y: isPrimary ? -80 : -35)
+            // Face Tracking Emoji Mask (Native Apple Vision Framework)
+            if position == .front {
+                FaceTrackingEmojiOverlayView(isPrimary: isPrimary)
+                    .frame(width: targetSize.width, height: targetSize.height)
             }
         }
     }

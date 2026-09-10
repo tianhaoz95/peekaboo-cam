@@ -34,6 +34,25 @@ public struct WatchRemoteControlView: View {
                         .padding(.vertical, 4)
                     }
 
+                    // Face Masks (Apple Vision Face Tracking)
+                    NavigationLink(destination: WatchFaceEmojiSettingsView()) {
+                        HStack {
+                            Text(sessionManager.activeFaceEmoji == "none" ? "🎭" : (FaceEmojiType(rawValue: sessionManager.activeFaceEmoji)?.emoji ?? "🎭"))
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("Face Masks (Vision)")
+                                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                Text(sessionManager.activeFaceEmoji == "none" ? "None (Tap to set)" : (FaceEmojiType(rawValue: sessionManager.activeFaceEmoji)?.displayName ?? "Active"))
+                                    .font(.system(size: 10, weight: .regular, design: .rounded))
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 4)
+                    }
+
                     // Full Soundboard Link
                     NavigationLink(destination: SillySoundboardView()) {
                         HStack {

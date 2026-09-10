@@ -58,6 +58,7 @@ targets:
     deploymentTarget: "10.0"
     sources:
       - KidsCamWatch
+      - path: KidsCam/Vision/FaceEmojiType.swift
     dependencies:
       - target: KidsCamWatchWidgets
         embed: true

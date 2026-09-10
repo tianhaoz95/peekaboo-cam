@@ -10,6 +10,7 @@ public final class WatchSessionManager: NSObject, ObservableObject {
     @Published public var isReachable: Bool = false
     @Published public var isToddlerLocked: Bool = false
     @Published public var layoutMode: String = "Picture-in-Picture"
+    @Published public var activeFaceEmoji: String = "none"
     @Published public var lastPhotoThumbnail: UIImage?
     @Published public var lastPhotoTimestamp: Date?
     @Published public var isTriggeringShutter: Bool = false
@@ -20,6 +21,19 @@ public final class WatchSessionManager: NSObject, ObservableObject {
             let session = WCSession.default
             session.delegate = self
             session.activate()
+        }
+    }
+
+    public func setFaceEmojiFilter(_ filter: FaceEmojiType?) {
+        WKInterfaceDevice.current().play(.click)
+        let raw = filter?.rawValue ?? "none"
+        self.activeFaceEmoji = raw
+        sendMessage(["action": "setFaceEmoji", "emoji": raw]) { [weak self] reply in
+            if let active = reply["activeEmoji"] as? String {
+                DispatchQueue.main.async {
+                    self?.activeFaceEmoji = active
+                }
+            }
         }
     }
 
@@ -121,6 +135,9 @@ extension WatchSessionManager: WCSessionDelegate {
             }
             if let layout = applicationContext["layoutMode"] as? String {
                 self.layoutMode = layout
+            }
+            if let emoji = applicationContext["activeFaceEmoji"] as? String {
+                self.activeFaceEmoji = emoji
             }
         }
     }

@@ -17,18 +17,20 @@
 
 ### 2. Toddler-Friendly & Child-Safe UI
 * **Big Bouncy Shutter Button:** Chunky 86pt tactile button with animated press states and crisp haptic feedback.
-* **Silly Sticker Overlays:** Toddlers can tap to wear animal ears (🦁, 🐶, 🐱), golden crowns (👑), sunglasses (🕶️), and magic hats (🎩).
+* **Clean Toddler Screen (Zero Clutter):** No confusing emoji toolbars or settings buttons on the phone; the screen is locked and simplified so toddlers focus on holding and taking photos.
+* **Native Apple Vision Face Tracking:** Emojis (🦁 Lion, 👑 Crown, 🕶️ Sunglasses, 🐱 Kitty, 🐶 Puppy, 🦄 Unicorn, 🐼 Panda, 🐰 Bunny, ⭐️ Star Eyes) automatically track the toddler's face in real-time using `VNDetectFaceLandmarksRequest`.
 * **Toddler Screen Lock:** Replaces touch gestures with an interactive bubble popping canvas (🫧, ⭐, ❤️, 🎵). Tapping produces playful pop sounds without breaking the camera stream.
 * **Parental Gate:** Access to Settings, Gallery, and Guided Access tutorials is secured behind a math challenge to prevent accidental toddler navigation.
 * **Built-in Soundboard:** Playful synthesized sound effects (Shutter chime, Puppy bark, Kitty meow, Duck quack, Baby giggle, Clown horn, Spring boing).
 
 ### 3. Apple Watch Remote Control
 * **Parent Remote on Apple Watch (`KidsCamWatch`):**
-  * Control the camera from your wrist while your toddler holds the phone!
+  * Control the camera and filters from your wrist while your toddler holds the phone!
+  * **Face Masks Remote Settings:** Choose or clear face tracking masks (Crown, Lion, Sunglasses, etc.) from the watch while the phone remains safely locked in toddler hands.
   * **Wrist Shutter:** Big, tactile shutter button with watch haptics (`WKInterfaceDevice`).
   * **Silly Attention Grabbers:** Tap 🐶 Puppy Bark, 🦆 Duck Quack, 🐱 Kitten Meow, or 👶 Baby Giggle on the watch to make the iPhone blast that sound, getting your child to look up and smile!
   * **Remote Screen Lock:** Remotely toggle the toddler screen lock on the phone.
-  * **Camera Swap & Layout Toggle:** Switch PiP / Split modes from your watch.
+  * **Camera Swap:** Switch front / rear cameras from your watch.
   * **Last Photo Thumbnail Review:** Instantly inspect the captured photo on your wrist.
 
 ### 4. Guided Access Education & Settings Shortcut
