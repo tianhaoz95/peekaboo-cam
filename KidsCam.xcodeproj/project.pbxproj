@@ -36,7 +36,6 @@
 		AB7E9B133C628492332709E0 /* DualCameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB656FA5882BC918CF3B836B /* DualCameraPreviewView.swift */; };
 		B2764F240EFD58DA4C7F07C6 /* SimulatorCameraStreamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B73E51D610A5E00A7D7C2F /* SimulatorCameraStreamer.swift */; };
 		BA7518471A047F46AC434BC6 /* ParentHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1FC650C66165A16F89CBEF8 /* ParentHubView.swift */; };
-		BF5197EA200C567ACB99D40F /* WatchFaceMockupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64DB7EB8CC533125CE2D125F /* WatchFaceMockupView.swift */; };
 		C0556FF254384585D18D585E /* meow.wav in Resources */ = {isa = PBXBuildFile; fileRef = 02A9C93A4743FCECB1FAF742 /* meow.wav */; };
 		C17ECDBA2BA62B6326F1CE3A /* shutter.wav in Resources */ = {isa = PBXBuildFile; fileRef = 1B1BFAF8E56444F56E1B8E89 /* shutter.wav */; };
 		CA913D24FD2FA189291DE2BD /* KidsCamTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A2E5D13D16645BBDE61388 /* KidsCamTests.swift */; };
@@ -123,7 +122,6 @@
 		4E05CDE08E1253BC82F0747C /* ToddlerControlBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToddlerControlBar.swift; sourceTree = "<group>"; };
 		59CDA1A81B2A018FBAAA73C5 /* quack.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = quack.wav; sourceTree = "<group>"; };
 		5DABA965F2BE80FDBF7828BF /* KidsCamTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = KidsCamTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		64DB7EB8CC533125CE2D125F /* WatchFaceMockupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchFaceMockupView.swift; sourceTree = "<group>"; };
 		6DB432D17380DD0B45B4027E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		70E59ABE2F465EAFC03E178E /* WatchFaceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchFaceManager.swift; sourceTree = "<group>"; };
 		73354534561230FB9B1F035F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -209,7 +207,6 @@
 			isa = PBXGroup;
 			children = (
 				70E59ABE2F465EAFC03E178E /* WatchFaceManager.swift */,
-				64DB7EB8CC533125CE2D125F /* WatchFaceMockupView.swift */,
 				3CBFAD201449588459ECEFDF /* WatchFaceStudioView.swift */,
 			);
 			path = WatchFace;
@@ -536,7 +533,6 @@
 				5CCEE52A06AA5F19BA63CC04 /* ToddlerLockOverlay.swift in Sources */,
 				6E82B753D99A974432735AE0 /* WatchConnectivityManager.swift in Sources */,
 				9CF94292F7726B1BDAB73551 /* WatchFaceManager.swift in Sources */,
-				BF5197EA200C567ACB99D40F /* WatchFaceMockupView.swift in Sources */,
 				A18B22EA7641BC758EE96E91 /* WatchFaceStudioView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

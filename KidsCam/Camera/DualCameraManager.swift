@@ -75,6 +75,7 @@ public final class DualCameraManager: NSObject, ObservableObject {
 
     private var backPhotoOutput: AVCapturePhotoOutput?
     private var frontPhotoOutput: AVCapturePhotoOutput?
+    private var frontVideoOutput: AVCaptureVideoDataOutput?
     private var pendingBackPhoto: UIImage?
     private var pendingFrontPhoto: UIImage?
     private let sessionQueue = DispatchQueue(label: "com.hejitech.kidscam.sessionQueue")
@@ -218,6 +219,21 @@ public final class DualCameraManager: NSObject, ObservableObject {
                         if session.canAddConnection(pConn) {
                             session.addConnection(pConn)
                             self.frontPhotoOutput = photoOut
+                        }
+                    }
+
+                    let videoOut = AVCaptureVideoDataOutput()
+                    videoOut.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA)]
+                    videoOut.alwaysDiscardsLateVideoFrames = true
+                    videoOut.setSampleBufferDelegate(self, queue: self.sessionQueue)
+                    if session.canAddOutput(videoOut) {
+                        session.addOutputWithNoConnections(videoOut)
+                        let vConn = AVCaptureConnection(inputPorts: [frontPort], output: videoOut)
+                        if session.canAddConnection(vConn) {
+                            session.addConnection(vConn)
+                            vConn.videoOrientation = .portrait
+                            vConn.isVideoMirrored = true
+                            self.frontVideoOutput = videoOut
                         }
                     }
                 }
@@ -451,5 +467,11 @@ extension DualCameraManager: AVCapturePhotoCaptureDelegate {
         }
 
         finishCaptureIfNeeded()
+    }
+}
+
+extension DualCameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
+    public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        FaceTrackingManager.shared.processSampleBuffer(sampleBuffer, orientation: .up)
     }
 }

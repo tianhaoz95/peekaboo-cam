@@ -62,8 +62,8 @@ public struct ParentHubView: View {
                     }
                 }
 
-                // Section 2: Apple Watch Companion & Face Settings
-                Section(header: Text("Apple Watch Remote & Face")) {
+                // Section 2: Apple Watch Complications & Remote
+                Section(header: Text("Apple Watch Complications")) {
                     Button(action: {
                         showWatchFaceSheet = true
                     }) {
@@ -73,11 +73,11 @@ public struct ParentHubView: View {
                                 .foregroundColor(.blue)
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Watch Face & Complications")
+                                Text("Watch Face Complications")
                                     .font(.system(size: 16, weight: .bold, design: .rounded))
                                     .foregroundColor(.primary)
 
-                                Text("Add remote complications or create photo watch faces")
+                                Text("Configure quick-launch complications for your Apple Watch")
                                     .font(.system(size: 13, weight: .regular, design: .rounded))
                                     .foregroundColor(.secondary)
                             }

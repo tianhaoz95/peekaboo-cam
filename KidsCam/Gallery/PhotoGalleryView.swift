@@ -6,7 +6,6 @@ public struct PhotoGalleryView: View {
 
     @State private var selectedPhoto: CapturedDualPhoto?
     @State private var isShowingShareSheet = false
-    @State private var isShowingWatchFaceStudio = false
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -34,33 +33,19 @@ public struct PhotoGalleryView: View {
                                     selectedPhoto = photo
                                 }
 
-                            HStack(spacing: 10) {
-                                Button(action: {
-                                    WatchFaceManager.shared.selectedPhoto = photo.compositeImage
-                                    isShowingWatchFaceStudio = true
-                                }) {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "applewatch")
-                                        Text("Watch Face")
-                                    }
-                                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 6)
-                                    .background(Color.blue)
-                                    .cornerRadius(12)
-                                }
-
-                                Button(action: {
-                                    isShowingShareSheet = true
-                                }) {
+                            Button(action: {
+                                isShowingShareSheet = true
+                            }) {
+                                HStack(spacing: 6) {
                                     Image(systemName: "square.and.arrow.up")
-                                        .font(.system(size: 14, weight: .bold))
-                                        .foregroundColor(.white)
-                                        .padding(8)
-                                        .background(Color.black.opacity(0.6))
-                                        .clipShape(Circle())
+                                    Text("Share")
                                 }
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Color.black.opacity(0.65))
+                                .cornerRadius(14)
                             }
                             .padding(14)
                         }
@@ -105,9 +90,6 @@ public struct PhotoGalleryView: View {
                     }
                     .font(.system(size: 16, weight: .bold))
                 }
-            }
-            .sheet(isPresented: $isShowingWatchFaceStudio) {
-                WatchFaceStudioView()
             }
             .sheet(isPresented: $isShowingShareSheet) {
                 if let photo = cameraManager.latestPhoto {

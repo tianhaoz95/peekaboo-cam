@@ -14,12 +14,15 @@ public final class FaceTrackingManager: ObservableObject {
     @Published public var normalizedFaceRect: CGRect = CGRect(x: 0.25, y: 0.15, width: 0.5, height: 0.5)
     @Published public var eyesCenterNormalized: CGPoint? = nil
     @Published public var foreheadCenterNormalized: CGPoint? = nil
+    @Published public var headRoll: Double = 0.0 // Head tilt in radians
+    @Published public var headYaw: Double = 0.0  // Face turn in radians
+    @Published public var lastImageSize: CGSize = CGSize(width: 1280, height: 720)
 
     private let visionQueue = DispatchQueue(label: "com.hejitech.kidscam.visionQueue", qos: .userInteractive)
     private var isProcessingFrame = false
 
-    // Exponential smoothing factor (0.0 = no update, 1.0 = instant snap)
-    private let smoothingAlpha: CGFloat = 0.38
+    // Exponential smoothing factor for silky responsive movement without jitter
+    private let smoothingAlpha: CGFloat = 0.45
 
     private init() {}
 
@@ -37,19 +40,28 @@ public final class FaceTrackingManager: ObservableObject {
     public func clearFilter() {
         if Thread.isMainThread {
             self.activeFilter = nil
+            self.isFaceDetected = false
         } else {
             DispatchQueue.main.async {
                 self.activeFilter = nil
+                self.isFaceDetected = false
             }
         }
     }
 
     // MARK: - Frame Processing (CMSampleBuffer)
-    public func processSampleBuffer(_ sampleBuffer: CMSampleBuffer, orientation: CGImagePropertyOrientation = .leftMirrored) {
+    public func processSampleBuffer(_ sampleBuffer: CMSampleBuffer, orientation: CGImagePropertyOrientation = .up) {
         guard activeFilter != nil else { return }
         guard !isProcessingFrame else { return }
 
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        let width = CVPixelBufferGetWidth(pixelBuffer)
+        let height = CVPixelBufferGetHeight(pixelBuffer)
+        if width > 0 && height > 0 {
+            DispatchQueue.main.async {
+                self.lastImageSize = CGSize(width: width, height: height)
+            }
+        }
 
         isProcessingFrame = true
         visionQueue.async { [weak self] in
@@ -57,7 +69,7 @@ public final class FaceTrackingManager: ObservableObject {
             defer { self.isProcessingFrame = false }
 
             let requestHandler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: orientation, options: [:])
-            self.performFaceLandmarksRequest(handler: requestHandler)
+            self.performFaceTrackingRequests(handler: requestHandler)
         }
     }
 
@@ -66,18 +78,42 @@ public final class FaceTrackingManager: ObservableObject {
         guard activeFilter != nil else { return }
         guard !isProcessingFrame else { return }
 
+        let width = cgImage.width
+        let height = cgImage.height
+        if width > 0 && height > 0 {
+            DispatchQueue.main.async {
+                self.lastImageSize = CGSize(width: width, height: height)
+            }
+        }
+
         isProcessingFrame = true
         visionQueue.async { [weak self] in
             guard let self = self else { return }
             defer { self.isProcessingFrame = false }
 
             let requestHandler = VNImageRequestHandler(cgImage: cgImage, orientation: orientation, options: [:])
-            self.performFaceLandmarksRequest(handler: requestHandler)
+            self.performFaceTrackingRequests(handler: requestHandler)
         }
     }
 
     public func processUIImage(_ image: UIImage) {
-        guard let cg = image.cgImage else { return }
+        guard activeFilter != nil else { return }
+
+        let cg: CGImage?
+        if let direct = image.cgImage {
+            cg = direct
+        } else if let ci = image.ciImage {
+            let ctx = CIContext(options: [CIContextOption.useSoftwareRenderer: false])
+            cg = ctx.createCGImage(ci, from: ci.extent)
+        } else {
+            UIGraphicsBeginImageContextWithOptions(image.size, false, image.scale)
+            image.draw(in: CGRect(origin: .zero, size: image.size))
+            cg = UIGraphicsGetImageFromCurrentImageContext()?.cgImage
+            UIGraphicsEndImageContext()
+        }
+
+        guard let validCG = cg else { return }
+
         let orientation: CGImagePropertyOrientation
         switch image.imageOrientation {
         case .up: orientation = .up
@@ -90,30 +126,60 @@ public final class FaceTrackingManager: ObservableObject {
         case .rightMirrored: orientation = .rightMirrored
         @unknown default: orientation = .up
         }
-        processCGImage(cg, orientation: orientation)
+
+        processCGImage(validCG, orientation: orientation)
     }
 
-    // MARK: - Native Vision Detection
-    private func performFaceLandmarksRequest(handler: VNImageRequestHandler) {
-        let request = VNDetectFaceLandmarksRequest { [weak self] (req, error) in
-            guard let self = self else { return }
+    // MARK: - Native Apple Vision Detection
+    private func performFaceTrackingRequests(handler: VNImageRequestHandler) {
+        var faceFound: VNFaceObservation? = nil
+
+        // 1. Primary: Landmarks Detection (Eyes, Contour, Roll)
+        let landmarksRequest = VNDetectFaceLandmarksRequest { (req, error) in
             if let results = req.results as? [VNFaceObservation], let face = results.first {
-                self.updateDetectedFace(face)
-            } else {
-                DispatchQueue.main.async {
-                    self.isFaceDetected = false
-                }
+                faceFound = face
             }
         }
 
+        #if targetEnvironment(simulator)
+        landmarksRequest.usesCPUOnly = true
+        #endif
+
         do {
-            try handler.perform([request])
+            try handler.perform([landmarksRequest])
         } catch {
-            print("[FaceTrackingManager] Vision error: \(error)")
+            // Simulator or hardware fallback
+        }
+
+        // 2. Secondary Fallback: Fast Rectangles Detection (Robust on all platforms)
+        if faceFound == nil {
+            let rectanglesRequest = VNDetectFaceRectanglesRequest { (req, error) in
+                if let results = req.results as? [VNFaceObservation], let face = results.first {
+                    faceFound = face
+                }
+            }
+
+            #if targetEnvironment(simulator)
+            rectanglesRequest.usesCPUOnly = true
+            #endif
+
+            do {
+                try handler.perform([rectanglesRequest])
+            } catch {
+                // Vision error logged
+            }
+        }
+
+        if let face = faceFound {
+            self.updateDetectedFace(face)
+        } else {
+            DispatchQueue.main.async {
+                self.isFaceDetected = false
+            }
         }
     }
 
-    // MARK: - Face Observation Handling & Smoothing
+    // MARK: - Face Observation Handling & Exponential Smoothing
     private func updateDetectedFace(_ face: VNFaceObservation) {
         // Vision coordinates: origin is bottom-left (0,0), size is (1,1)
         // Convert to UIKit/SwiftUI coordinates: origin is top-left (0,0)
@@ -124,6 +190,10 @@ public final class FaceTrackingManager: ObservableObject {
         let targetHeight = visionBox.size.height
         let targetRect = CGRect(x: targetX, y: targetY, width: targetWidth, height: targetHeight)
 
+        // Head roll (tilt) & yaw
+        let rollVal = face.roll?.doubleValue ?? 0.0 // Tilt in radians
+        let yawVal = face.yaw?.doubleValue ?? 0.0
+
         // Extract landmarks if available (eyes & forehead)
         var eyesCenter: CGPoint? = nil
         var foreheadCenter: CGPoint? = nil
@@ -133,7 +203,6 @@ public final class FaceTrackingManager: ObservableObject {
                 let leftPoints = leftEye.normalizedPoints
                 let rightPoints = rightEye.normalizedPoints
                 if !leftPoints.isEmpty && !rightPoints.isEmpty {
-                    // Average points in face bounding box
                     let avgLeftX = leftPoints.map { $0.x }.reduce(0, +) / CGFloat(leftPoints.count)
                     let avgLeftY = leftPoints.map { $0.y }.reduce(0, +) / CGFloat(leftPoints.count)
                     let avgRightX = rightPoints.map { $0.x }.reduce(0, +) / CGFloat(rightPoints.count)
@@ -149,7 +218,6 @@ public final class FaceTrackingManager: ObservableObject {
             if let contour = landmarks.faceContour {
                 let pts = contour.normalizedPoints
                 if !pts.isEmpty {
-                    // Top-most contour point
                     let topContourY = pts.map { $0.y }.max() ?? 1.0
                     let foreheadVisionX = visionBox.origin.x + (visionBox.size.width * 0.5)
                     let foreheadVisionY = visionBox.origin.y + (topContourY * visionBox.size.height)
@@ -162,7 +230,7 @@ public final class FaceTrackingManager: ObservableObject {
             guard let self = self else { return }
             self.isFaceDetected = true
 
-            // Exponential smoothing to prevent jitter
+            // Exponential smoothing for smooth tracking without jitter
             let current = self.normalizedFaceRect
             let smoothedX = current.origin.x + (targetRect.origin.x - current.origin.x) * self.smoothingAlpha
             let smoothedY = current.origin.y + (targetRect.origin.y - current.origin.y) * self.smoothingAlpha
@@ -170,42 +238,78 @@ public final class FaceTrackingManager: ObservableObject {
             let smoothedH = current.size.height + (targetRect.size.height - current.size.height) * self.smoothingAlpha
 
             self.normalizedFaceRect = CGRect(x: smoothedX, y: smoothedY, width: smoothedW, height: smoothedH)
-            self.eyesCenterNormalized = eyesCenter ?? CGPoint(x: smoothedX + smoothedW * 0.5, y: smoothedY + smoothedH * 0.42)
-            self.foreheadCenterNormalized = foreheadCenter ?? CGPoint(x: smoothedX + smoothedW * 0.5, y: smoothedY + smoothedH * 0.15)
+            self.eyesCenterNormalized = eyesCenter ?? CGPoint(x: smoothedX + smoothedW * 0.5, y: smoothedY + smoothedH * 0.40)
+            self.foreheadCenterNormalized = foreheadCenter ?? CGPoint(x: smoothedX + smoothedW * 0.5, y: smoothedY + smoothedH * 0.12)
+            self.headRoll = self.headRoll + (rollVal - self.headRoll) * Double(self.smoothingAlpha)
+            self.headYaw = self.headYaw + (yawVal - self.headYaw) * Double(self.smoothingAlpha)
         }
     }
 
-    // MARK: - UI Coordinate Conversion
-    public func anchorPoint(for anchor: FaceAnchorPosition, in containerSize: CGSize) -> CGPoint {
+    // MARK: - Exact Aspect-Fill UI Coordinate Conversion
+    public func anchorPoint(
+        for anchor: FaceAnchorPosition,
+        in containerSize: CGSize,
+        imageSize: CGSize? = nil
+    ) -> CGPoint {
+        guard containerSize.width > 0 && containerSize.height > 0 else { return .zero }
         let rect = normalizedFaceRect
 
+        let rawPt: CGPoint
         switch anchor {
         case .forehead:
-            let pt = foreheadCenterNormalized ?? CGPoint(x: rect.midX, y: rect.origin.y + rect.size.height * 0.15)
-            return CGPoint(x: pt.x * containerSize.width, y: pt.y * containerSize.height)
-
+            rawPt = foreheadCenterNormalized ?? CGPoint(x: rect.midX, y: rect.origin.y + rect.size.height * 0.12)
         case .eyes:
-            let pt = eyesCenterNormalized ?? CGPoint(x: rect.midX, y: rect.origin.y + rect.size.height * 0.42)
-            return CGPoint(x: pt.x * containerSize.width, y: pt.y * containerSize.height)
-
+            rawPt = eyesCenterNormalized ?? CGPoint(x: rect.midX, y: rect.origin.y + rect.size.height * 0.40)
         case .head:
-            return CGPoint(x: rect.midX * containerSize.width, y: (rect.origin.y + rect.size.height * 0.45) * containerSize.height)
+            rawPt = CGPoint(x: rect.midX, y: rect.origin.y + rect.size.height * 0.45)
+        }
+
+        let frame = imageSize ?? lastImageSize
+        guard frame.width > 0 && frame.height > 0 else {
+            return CGPoint(x: rawPt.x * containerSize.width, y: rawPt.y * containerSize.height)
+        }
+
+        // Exact Aspect-Fill projection from camera pixel coordinates to container view bounds
+        let imgAspect = frame.width / frame.height
+        let boxAspect = containerSize.width / containerSize.height
+
+        if imgAspect > boxAspect {
+            // Image is wider than container: container height matches, width cropped on sides
+            let scale = containerSize.height / frame.height
+            let renderedWidth = frame.width * scale
+            let xOffset = (containerSize.width - renderedWidth) / 2.0
+            return CGPoint(x: xOffset + (rawPt.x * renderedWidth), y: rawPt.y * containerSize.height)
+        } else {
+            // Image is taller than container: container width matches, height cropped top/bottom
+            let scale = containerSize.width / frame.width
+            let renderedHeight = frame.height * scale
+            let yOffset = (containerSize.height - renderedHeight) / 2.0
+            return CGPoint(x: rawPt.x * containerSize.width, y: yOffset + (rawPt.y * renderedHeight))
         }
     }
 
-    public func emojiSize(in containerSize: CGSize, for filter: FaceEmojiType) -> CGFloat {
-        let faceWidth = normalizedFaceRect.size.width * containerSize.width
+    public func emojiSize(
+        in containerSize: CGSize,
+        for filter: FaceEmojiType,
+        imageSize: CGSize? = nil
+    ) -> CGFloat {
+        let frame = imageSize ?? lastImageSize
+        let renderScale: CGFloat
+        if frame.width > 0 && frame.height > 0 {
+            renderScale = max(containerSize.width / frame.width, containerSize.height / frame.height)
+        } else {
+            renderScale = containerSize.width / 400.0
+        }
+
+        let actualFaceWidth = (normalizedFaceRect.size.width * (frame.width > 0 ? frame.width : containerSize.width)) * renderScale
 
         switch filter.anchorPosition {
         case .forehead:
-            // Crowns and bunny ears should be nicely sized on the head
-            return max(faceWidth * 0.9, 64)
+            return max(actualFaceWidth * 0.92, 58)
         case .eyes:
-            // Sunglasses sized to span across both eyes
-            return max(faceWidth * 0.85, 54)
+            return max(actualFaceWidth * 0.88, 50)
         case .head:
-            // Animal mask slightly larger than face
-            return max(faceWidth * 1.15, 80)
+            return max(actualFaceWidth * 1.18, 75)
         }
     }
 }

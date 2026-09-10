@@ -1,18 +1,10 @@
 import SwiftUI
-import PhotosUI
 
 public struct WatchFaceStudioView: View {
     @ObservedObject var watchManager = WatchFaceManager.shared
-    @ObservedObject var cameraManager = DualCameraManager.shared
     @Environment(\.presentationMode) var presentationMode
 
-    @State private var selectedTab: Int = 0
-    @State private var showingPhotoPicker = false
-    @State private var selectedPickerItem: PhotosPickerItem?
-    @State private var isSharingWatchFace = false
     @State private var showSyncConfirmation = false
-    @State private var showSaveSuccessBanner = false
-    @State private var isSavingPhoto = false
 
     private let colorChoices: [(String, Color, UIColor)] = [
         ("White", .white, .white),
@@ -23,31 +15,14 @@ public struct WatchFaceStudioView: View {
         ("Lilac", Color(red: 0.85, green: 0.7, blue: 1.0), UIColor(red: 0.85, green: 0.7, blue: 1.0, alpha: 1.0))
     ]
 
-    public init(initialTab: Int = 0) {
-        self._selectedTab = State(initialValue: initialTab)
-    }
+    public init(initialTab: Int = 0) {}
 
     public var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
-                // Section Picker
-                Picker("Studio Mode", selection: $selectedTab) {
-                    Text("⌚️ Complications").tag(0)
-                    Text("🖼️ Photo Watch Face").tag(1)
-                }
-                .pickerStyle(SegmentedPickerStyle())
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-
-                ScrollView {
-                    if selectedTab == 0 {
-                        complicationsSettingsView
-                    } else {
-                        photoWatchFaceView
-                    }
-                }
+            ScrollView {
+                complicationsSettingsView
             }
-            .navigationTitle("Apple Watch Studio")
+            .navigationTitle("Watch Complications")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -57,21 +32,10 @@ public struct WatchFaceStudioView: View {
                     .font(.system(size: 16, weight: .bold))
                 }
             }
-            .photosPicker(isPresented: $showingPhotoPicker, selection: $selectedPickerItem, matching: .images)
-            .onChange(of: selectedPickerItem) { newItem in
-                Task {
-                    if let data = try? await newItem?.loadTransferable(type: Data.self),
-                       let uiImage = UIImage(data: data) {
-                        DispatchQueue.main.async {
-                            watchManager.selectedPhoto = uiImage
-                        }
-                    }
-                }
-            }
         }
     }
 
-    // MARK: - Tab 1: Complications Settings
+    // MARK: - Complications Settings
     private var complicationsSettingsView: some View {
         VStack(spacing: 20) {
             // Quick launcher hero card
@@ -83,7 +47,7 @@ public struct WatchFaceStudioView: View {
                 Text("Watch Face Remote Shortcut")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
 
-                Text("Add the ToddlerCam complication to your favorite Apple Watch face to take photos or make animal sounds with a single tap on your wrist!")
+                Text("Add the ToddlerCam complication to any Apple Watch face to take photos or make animal sounds with a single tap on your wrist!")
                     .font(.system(size: 14, weight: .regular, design: .rounded))
                     .multilineTextAlignment(.center)
                     .foregroundColor(.secondary)
@@ -150,6 +114,39 @@ public struct WatchFaceStudioView: View {
                 }
             }
 
+            // Complication Accent Color Theme
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Complication Tint Color")
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .padding(.horizontal, 20)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 14) {
+                        ForEach(colorChoices, id: \.0) { choice in
+                            Button(action: {
+                                SoundEffectManager.shared.play(.pop)
+                                watchManager.selectedComplicationColor = choice.2
+                                watchManager.syncComplicationSettingsToWatch()
+                            }) {
+                                VStack(spacing: 6) {
+                                    Circle()
+                                        .fill(choice.1)
+                                        .frame(width: 38, height: 38)
+                                        .overlay(
+                                            Circle()
+                                                .stroke(watchManager.selectedComplicationColor == choice.2 ? Color.blue : Color.secondary.opacity(0.3), lineWidth: 3)
+                                        )
+                                    Text(choice.0)
+                                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                                        .foregroundColor(.primary)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                }
+            }
+
             if showSyncConfirmation {
                 HStack {
                     Image(systemName: "checkmark.circle.fill")
@@ -196,259 +193,6 @@ public struct WatchFaceStudioView: View {
         case .cameraRemote: return "Launch full ToddlerCam Remote on your watch"
         case .liveStatus: return "Show ToddlerCam connection & battery status"
         }
-    }
-
-    // MARK: - Tab 2: Photo Watch Face Studio
-    private var photoWatchFaceView: some View {
-        VStack(spacing: 24) {
-            // Live Interactive Watch Face Mockup
-            WatchFaceMockupView(
-                photo: watchManager.selectedPhoto,
-                timePosition: watchManager.selectedTimePosition,
-                timeColor: Color(watchManager.selectedTimeColor),
-                complicationStyle: watchManager.selectedComplication
-            )
-            .padding(.top, 10)
-
-            // Choose Photo Source
-            HStack(spacing: 14) {
-                if let latest = cameraManager.latestPhoto {
-                    Button(action: {
-                        SoundEffectManager.shared.play(.pop)
-                        watchManager.selectedPhoto = latest.compositeImage
-                    }) {
-                        HStack {
-                            Image(systemName: "sparkles")
-                            Text("Use Latest Dual Photo")
-                        }
-                        .font(.system(size: 14, weight: .bold, design: .rounded))
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .background(Color.orange.opacity(0.18))
-                        .foregroundColor(.orange)
-                        .cornerRadius(14)
-                    }
-                }
-
-                Button(action: {
-                    showingPhotoPicker = true
-                }) {
-                    HStack {
-                        Image(systemName: "photo")
-                        Text("Pick from Photos")
-                    }
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(Color.blue.opacity(0.18))
-                    .foregroundColor(.blue)
-                    .cornerRadius(14)
-                }
-            }
-
-            // Time Position Selector
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Time Position")
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .padding(.horizontal, 20)
-
-                Picker("Time Position", selection: $watchManager.selectedTimePosition) {
-                    ForEach(WatchTimePosition.allCases) { pos in
-                        Text(pos.rawValue).tag(pos)
-                    }
-                }
-                .pickerStyle(SegmentedPickerStyle())
-                .padding(.horizontal, 20)
-            }
-
-            // Time Color Palette
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Time Color")
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .padding(.horizontal, 20)
-
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(colorChoices, id: \.0) { item in
-                            Button(action: {
-                                SoundEffectManager.shared.play(.pop)
-                                watchManager.selectedTimeColor = item.2
-                            }) {
-                                Circle()
-                                    .fill(item.1)
-                                    .frame(width: 38, height: 38)
-                                    .overlay(
-                                        Circle()
-                                            .stroke(watchManager.selectedTimeColor == item.2 ? Color.primary : Color.clear, lineWidth: 3)
-                                    )
-                                    .shadow(color: Color.black.opacity(0.15), radius: 3)
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                }
-            }
-
-            // Success Confirmation Toast Banner
-            if showSaveSuccessBanner {
-                HStack(spacing: 12) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 24))
-                        .foregroundColor(.green)
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Photo Saved to Camera Roll!")
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundColor(.primary)
-
-                        Text("Optimized 820×1004 px. Ready for your Apple Watch.")
-                            .font(.system(size: 12, weight: .medium, design: .rounded))
-                            .foregroundColor(.secondary)
-                    }
-
-                    Spacer()
-                }
-                .padding(14)
-                .background(Color.green.opacity(0.15))
-                .cornerRadius(16)
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.green.opacity(0.3), lineWidth: 1.5))
-                .padding(.horizontal, 20)
-                .transition(.opacity.combined(with: .scale))
-            }
-
-            // Action 1: Save Photo to Camera Roll (Recommended)
-            Button(action: {
-                SoundEffectManager.shared.play(.pop)
-                isSavingPhoto = true
-                watchManager.saveWatchFaceToPhotoLibrary { success in
-                    isSavingPhoto = false
-                    if success {
-                        SoundEffectManager.shared.play(.shutter)
-                        withAnimation {
-                            showSaveSuccessBanner = true
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-                            withAnimation {
-                                showSaveSuccessBanner = false
-                            }
-                        }
-                    }
-                }
-            }) {
-                HStack(spacing: 10) {
-                    Image(systemName: "square.and.arrow.down.fill")
-                        .font(.system(size: 20, weight: .bold))
-                    Text(isSavingPhoto ? "Saving Photo..." : "Save Photo for Watch Face")
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
-                }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(
-                    LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing)
-                )
-                .cornerRadius(20)
-                .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
-                .padding(.horizontal, 20)
-            }
-            .disabled(isSavingPhoto)
-
-            // Action 2 & 3: Open Watch App & Share Sheet
-            HStack(spacing: 12) {
-                // Open Apple Watch App
-                Button(action: {
-                    SoundEffectManager.shared.play(.pop)
-                    watchManager.openAppleWatchApp()
-                }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "applewatch")
-                            .font(.system(size: 16, weight: .semibold))
-                        Text("Open Watch App")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
-                    }
-                    .foregroundColor(.primary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 13)
-                    .background(Color(UIColor.secondarySystemBackground))
-                    .cornerRadius(14)
-                }
-
-                // Share / Export Photo
-                Button(action: {
-                    SoundEffectManager.shared.play(.pop)
-                    watchManager.shareWatchFace { }
-                }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 16, weight: .semibold))
-                        Text("Share Photo...")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
-                    }
-                    .foregroundColor(.primary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 13)
-                    .background(Color(UIColor.secondarySystemBackground))
-                    .cornerRadius(14)
-                }
-            }
-            .padding(.horizontal, 20)
-
-            // Apple iOS Watch Face Education & Guide Card
-            appleWatchFaceGuideCard
-                .padding(.horizontal, 20)
-
-            Spacer(minLength: 30)
-        }
-        .padding(.vertical, 16)
-    }
-
-    // MARK: - Apple Watch Face Creation Guide Card
-    private var appleWatchFaceGuideCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: "questionmark.circle.fill")
-                    .foregroundColor(.orange)
-                    .font(.system(size: 18))
-
-                Text("Why can't apps set Watch Faces directly?")
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundColor(.primary)
-            }
-
-            Text("Apple strictly restricts third-party apps from programmatically altering your Apple Watch face for security, privacy, and battery reasons. Only Apple's Photos app and Watch app can set faces.")
-                .font(.system(size: 12, weight: .regular, design: .rounded))
-                .foregroundColor(.secondary)
-                .lineSpacing(2)
-
-            Divider()
-
-            Text("2 Easy Ways to Set Your Toddler Photo:")
-                .font(.system(size: 13, weight: .bold, design: .rounded))
-                .foregroundColor(.primary)
-
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .top, spacing: 8) {
-                    Text("1.")
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundColor(.blue)
-                    Text("**From Apple Photos app (Fastest):** Tap 'Save Photo for Watch Face' above. Open the **Photos** app, tap **Share** ➔ **Create Watch Face** ➔ choose **Photos Face**.")
-                        .font(.system(size: 12, weight: .regular, design: .rounded))
-                        .foregroundColor(.secondary)
-                }
-
-                HStack(alignment: .top, spacing: 8) {
-                    Text("2.")
-                        .font(.system(size: 12, weight: .bold, design: .rounded))
-                        .foregroundColor(.purple)
-                    Text("**Directly on Apple Watch:** Press and hold your watch display, swipe right to **+ (New)**, select **Photos**, and choose this toddler photo.")
-                        .font(.system(size: 12, weight: .regular, design: .rounded))
-                        .foregroundColor(.secondary)
-                }
-            }
-        }
-        .padding(16)
-        .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(18)
     }
 
     // MARK: - How to Add Complication Card

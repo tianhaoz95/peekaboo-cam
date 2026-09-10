@@ -61,8 +61,13 @@ public final class DualPhotoRenderer {
                 let attrs: [NSAttributedString.Key: Any] = [.font: font]
                 let str = NSString(string: active.emoji)
                 let strSize = str.size(withAttributes: attrs)
-                let drawOrigin = CGPoint(x: emojiPt.x - (strSize.width / 2.0), y: emojiPt.y - (strSize.height / 2.0))
+
+                cg.saveGState()
+                cg.translateBy(x: emojiPt.x, y: emojiPt.y)
+                cg.rotate(by: CGFloat(FaceTrackingManager.shared.headRoll))
+                let drawOrigin = CGPoint(x: -(strSize.width / 2.0), y: -(strSize.height / 2.0))
                 str.draw(at: drawOrigin, withAttributes: attrs)
+                cg.restoreGState()
             }
 
             // Watermark ribbon at bottom

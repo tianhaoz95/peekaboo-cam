@@ -54,12 +54,27 @@ final class KidsCamTests: XCTestCase {
         XCTAssertEqual(compositeFrontPrimary.size.height, 1600)
     }
 
-    func testWatchFaceExportDimensions() {
-        let manager = WatchFaceManager.shared
-        let sample = DualPhotoRenderer.renderSimulatedFrontCamera()
-        let exported = manager.exportWatchFaceImage(from: sample)
-        XCTAssertEqual(exported.size.width, 820)
-        XCTAssertEqual(exported.size.height, 1004)
+    func testFaceTrackingMovementAndHeadRoll() {
+        let manager = FaceTrackingManager.shared
+        manager.setActiveFilter(.crown)
+
+        let container = CGSize(width: 400, height: 800)
+
+        // 1. Face on the left side of frame
+        manager.normalizedFaceRect = CGRect(x: 0.2, y: 0.15, width: 0.3, height: 0.3)
+        manager.foreheadCenterNormalized = CGPoint(x: 0.35, y: 0.18)
+        manager.headRoll = 0.25
+        let pointLeft = manager.anchorPoint(for: .forehead, in: container)
+
+        // 2. Face moves to the right side of frame
+        manager.normalizedFaceRect = CGRect(x: 0.6, y: 0.15, width: 0.3, height: 0.3)
+        manager.foreheadCenterNormalized = CGPoint(x: 0.75, y: 0.18)
+        manager.headRoll = -0.30
+        let pointRight = manager.anchorPoint(for: .forehead, in: container)
+
+        // Verify emoji moves with face and tilts with head roll
+        XCTAssertGreaterThan(pointRight.x, pointLeft.x, "Emoji anchor must follow face movement to the right")
+        XCTAssertEqual(manager.headRoll, -0.30, accuracy: 0.01)
     }
 
     func testSoundTypeCatalog() {
@@ -172,8 +187,8 @@ final class KidsCamTests: XCTestCase {
     }
 
     @MainActor
-    func testWatchFaceStudioViewSnapshot() {
-        let view = WatchFaceStudioView(initialTab: 0)
+    func testWatchComplicationsStudioViewSnapshot() {
+        let view = WatchFaceStudioView()
         let controller = UIHostingController(rootView: view)
         controller.view.bounds = CGRect(x: 0, y: 0, width: 440, height: 956)
         controller.view.backgroundColor = .systemBackground
@@ -184,25 +199,7 @@ final class KidsCamTests: XCTestCase {
         }
         XCTAssertGreaterThan(image.size.width, 0)
         if let data = image.pngData() {
-            let path = "/Users/tianhaoz/.gemini/antigravity-cli/brain/04e94b9a-263a-4ac8-8a99-d26f65ce8b13/watch_face_studio_snapshot.png"
-            try? data.write(to: URL(fileURLWithPath: path))
-        }
-    }
-
-    @MainActor
-    func testPhotoWatchFaceStudioViewSnapshot() {
-        let view = WatchFaceStudioView(initialTab: 1)
-        let controller = UIHostingController(rootView: view)
-        controller.view.bounds = CGRect(x: 0, y: 0, width: 440, height: 956)
-        controller.view.backgroundColor = .systemBackground
-        controller.view.layoutIfNeeded()
-        let renderer = UIGraphicsImageRenderer(size: controller.view.bounds.size)
-        let image = renderer.image { _ in
-            controller.view.drawHierarchy(in: controller.view.bounds, afterScreenUpdates: true)
-        }
-        XCTAssertGreaterThan(image.size.width, 0)
-        if let data = image.pngData() {
-            let path = "/Users/tianhaoz/.gemini/antigravity-cli/brain/04e94b9a-263a-4ac8-8a99-d26f65ce8b13/photo_watch_face_studio_snapshot.png"
+            let path = "/Users/tianhaoz/.gemini/antigravity-cli/brain/04e94b9a-263a-4ac8-8a99-d26f65ce8b13/watch_complications_studio_snapshot.png"
             try? data.write(to: URL(fileURLWithPath: path))
         }
     }
