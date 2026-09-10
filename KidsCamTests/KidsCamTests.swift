@@ -170,4 +170,40 @@ final class KidsCamTests: XCTestCase {
             try? data.write(to: URL(fileURLWithPath: path))
         }
     }
+
+    @MainActor
+    func testWatchFaceStudioViewSnapshot() {
+        let view = WatchFaceStudioView(initialTab: 0)
+        let controller = UIHostingController(rootView: view)
+        controller.view.bounds = CGRect(x: 0, y: 0, width: 440, height: 956)
+        controller.view.backgroundColor = .systemBackground
+        controller.view.layoutIfNeeded()
+        let renderer = UIGraphicsImageRenderer(size: controller.view.bounds.size)
+        let image = renderer.image { _ in
+            controller.view.drawHierarchy(in: controller.view.bounds, afterScreenUpdates: true)
+        }
+        XCTAssertGreaterThan(image.size.width, 0)
+        if let data = image.pngData() {
+            let path = "/Users/tianhaoz/.gemini/antigravity-cli/brain/04e94b9a-263a-4ac8-8a99-d26f65ce8b13/watch_face_studio_snapshot.png"
+            try? data.write(to: URL(fileURLWithPath: path))
+        }
+    }
+
+    @MainActor
+    func testPhotoWatchFaceStudioViewSnapshot() {
+        let view = WatchFaceStudioView(initialTab: 1)
+        let controller = UIHostingController(rootView: view)
+        controller.view.bounds = CGRect(x: 0, y: 0, width: 440, height: 956)
+        controller.view.backgroundColor = .systemBackground
+        controller.view.layoutIfNeeded()
+        let renderer = UIGraphicsImageRenderer(size: controller.view.bounds.size)
+        let image = renderer.image { _ in
+            controller.view.drawHierarchy(in: controller.view.bounds, afterScreenUpdates: true)
+        }
+        XCTAssertGreaterThan(image.size.width, 0)
+        if let data = image.pngData() {
+            let path = "/Users/tianhaoz/.gemini/antigravity-cli/brain/04e94b9a-263a-4ac8-8a99-d26f65ce8b13/photo_watch_face_studio_snapshot.png"
+            try? data.write(to: URL(fileURLWithPath: path))
+        }
+    }
 }

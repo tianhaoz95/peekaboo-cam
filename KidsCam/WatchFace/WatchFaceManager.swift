@@ -42,15 +42,19 @@ public final class WatchFaceManager: ObservableObject {
 
     public func openAppleWatchApp() {
         let watchURLs = [
-            "watch://",
             "itms-watch://",
-            "App-Prefs:root=WATCH"
+            "watch://",
+            "App-prefs:root=WATCH",
+            "prefs:root=WATCH"
         ]
         for urlStr in watchURLs {
             if let url = URL(string: urlStr), UIApplication.shared.canOpenURL(url) {
                 UIApplication.shared.open(url, options: [:], completionHandler: nil)
                 return
             }
+        }
+        if let fallback = URL(string: "itms-watch://") {
+            UIApplication.shared.open(fallback, options: [:], completionHandler: nil)
         }
     }
 
@@ -93,18 +97,53 @@ public final class WatchFaceManager: ObservableObject {
         }
     }
 
-    public func shareWatchFace(from sourceView: UIView, completion: @escaping () -> Void) {
+    public func saveWatchFaceToPhotoLibrary(completion: @escaping (Bool) -> Void) {
+        guard let photo = selectedPhoto else {
+            completion(false)
+            return
+        }
+        let watchImage = exportWatchFaceImage(from: photo)
+
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+            guard status == .authorized || status == .limited else {
+                DispatchQueue.main.async { completion(false) }
+                return
+            }
+            PHPhotoLibrary.shared().performChanges({
+                PHAssetChangeRequest.creationRequestForAsset(from: watchImage)
+            }) { success, error in
+                DispatchQueue.main.async {
+                    completion(success)
+                }
+            }
+        }
+    }
+
+    public func shareWatchFace(from sourceView: UIView? = nil, completion: @escaping () -> Void) {
         guard let photo = selectedPhoto else { return }
         let watchImage = exportWatchFaceImage(from: photo)
 
         let activityVC = UIActivityViewController(activityItems: [watchImage], applicationActivities: nil)
-        if let popover = activityVC.popoverPresentationController {
-            popover.sourceView = sourceView
-            popover.sourceRect = sourceView.bounds
+
+        // Find top-most presented controller across active scenes
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        let keyWindow = scenes.flatMap { $0.windows }.first { $0.isKeyWindow } ?? scenes.first?.windows.first
+
+        guard var topController = keyWindow?.rootViewController else { return }
+        while let presented = topController.presentedViewController {
+            topController = presented
         }
 
-        if let rootVC = UIApplication.shared.windows.first?.rootViewController {
-            rootVC.present(activityVC, animated: true, completion: completion)
+        if let popover = activityVC.popoverPresentationController {
+            if let src = sourceView {
+                popover.sourceView = src
+                popover.sourceRect = src.bounds
+            } else {
+                popover.sourceView = topController.view
+                popover.sourceRect = CGRect(x: topController.view.bounds.midX, y: topController.view.bounds.midY, width: 0, height: 0)
+            }
         }
+
+        topController.present(activityVC, animated: true, completion: completion)
     }
 }

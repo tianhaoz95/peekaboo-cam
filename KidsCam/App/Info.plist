@@ -43,6 +43,8 @@
 		<string>app-prefs</string>
 		<string>App-prefs</string>
 		<string>App-Prefs</string>
+		<string>itms-watch</string>
+		<string>watch</string>
 	</array>
 </dict>
 </plist>

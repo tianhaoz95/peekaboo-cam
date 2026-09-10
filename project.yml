@@ -38,6 +38,8 @@ targets:
           - app-prefs
           - App-prefs
           - App-Prefs
+          - itms-watch
+          - watch
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.hejitech.kidscam

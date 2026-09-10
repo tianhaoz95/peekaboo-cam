@@ -11,6 +11,8 @@ public struct WatchFaceStudioView: View {
     @State private var selectedPickerItem: PhotosPickerItem?
     @State private var isSharingWatchFace = false
     @State private var showSyncConfirmation = false
+    @State private var showSaveSuccessBanner = false
+    @State private var isSavingPhoto = false
 
     private let colorChoices: [(String, Color, UIColor)] = [
         ("White", .white, .white),
@@ -21,7 +23,9 @@ public struct WatchFaceStudioView: View {
         ("Lilac", Color(red: 0.85, green: 0.7, blue: 1.0), UIColor(red: 0.85, green: 0.7, blue: 1.0, alpha: 1.0))
     ]
 
-    public init() {}
+    public init(initialTab: Int = 0) {
+        self._selectedTab = State(initialValue: initialTab)
+    }
 
     public var body: some View {
         NavigationView {
@@ -285,40 +289,166 @@ public struct WatchFaceStudioView: View {
                 }
             }
 
-            // Add to Apple Watch Action Button
+            // Success Confirmation Toast Banner
+            if showSaveSuccessBanner {
+                HStack(spacing: 12) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(.green)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Photo Saved to Camera Roll!")
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)
+
+                        Text("Optimized 820×1004 px. Ready for your Apple Watch.")
+                            .font(.system(size: 12, weight: .medium, design: .rounded))
+                            .foregroundColor(.secondary)
+                    }
+
+                    Spacer()
+                }
+                .padding(14)
+                .background(Color.green.opacity(0.15))
+                .cornerRadius(16)
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.green.opacity(0.3), lineWidth: 1.5))
+                .padding(.horizontal, 20)
+                .transition(.opacity.combined(with: .scale))
+            }
+
+            // Action 1: Save Photo to Camera Roll (Recommended)
             Button(action: {
-                SoundEffectManager.shared.play(.shutter)
-                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                   let rootVC = windowScene.windows.first?.rootViewController {
-                    watchManager.shareWatchFace(from: rootVC.view) {}
+                SoundEffectManager.shared.play(.pop)
+                isSavingPhoto = true
+                watchManager.saveWatchFaceToPhotoLibrary { success in
+                    isSavingPhoto = false
+                    if success {
+                        SoundEffectManager.shared.play(.shutter)
+                        withAnimation {
+                            showSaveSuccessBanner = true
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                            withAnimation {
+                                showSaveSuccessBanner = false
+                            }
+                        }
+                    }
                 }
             }) {
-                HStack {
-                    Image(systemName: "plus.app.fill")
+                HStack(spacing: 10) {
+                    Image(systemName: "square.and.arrow.down.fill")
                         .font(.system(size: 20, weight: .bold))
-                    Text("Add to Apple Watch Face")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                    Text(isSavingPhoto ? "Saving Photo..." : "Save Photo for Watch Face")
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(
-                    LinearGradient(colors: [.orange, .pink], startPoint: .leading, endPoint: .trailing)
+                    LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing)
                 )
                 .cornerRadius(20)
-                .shadow(color: Color.orange.opacity(0.3), radius: 8, x: 0, y: 4)
+                .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
                 .padding(.horizontal, 20)
             }
+            .disabled(isSavingPhoto)
 
-            Text("💡 Tap 'Add to Apple Watch Face' to open the iOS share sheet, then choose 'Create Watch Face' to set your toddler photo directly on your Apple Watch!")
-                .font(.system(size: 13, weight: .medium, design: .rounded))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 28)
+            // Action 2 & 3: Open Watch App & Share Sheet
+            HStack(spacing: 12) {
+                // Open Apple Watch App
+                Button(action: {
+                    SoundEffectManager.shared.play(.pop)
+                    watchManager.openAppleWatchApp()
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "applewatch")
+                            .font(.system(size: 16, weight: .semibold))
+                        Text("Open Watch App")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                    }
+                    .foregroundColor(.primary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 13)
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .cornerRadius(14)
+                }
+
+                // Share / Export Photo
+                Button(action: {
+                    SoundEffectManager.shared.play(.pop)
+                    watchManager.shareWatchFace { }
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 16, weight: .semibold))
+                        Text("Share Photo...")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                    }
+                    .foregroundColor(.primary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 13)
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .cornerRadius(14)
+                }
+            }
+            .padding(.horizontal, 20)
+
+            // Apple iOS Watch Face Education & Guide Card
+            appleWatchFaceGuideCard
+                .padding(.horizontal, 20)
 
             Spacer(minLength: 30)
         }
         .padding(.vertical, 16)
+    }
+
+    // MARK: - Apple Watch Face Creation Guide Card
+    private var appleWatchFaceGuideCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "questionmark.circle.fill")
+                    .foregroundColor(.orange)
+                    .font(.system(size: 18))
+
+                Text("Why can't apps set Watch Faces directly?")
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+            }
+
+            Text("Apple strictly restricts third-party apps from programmatically altering your Apple Watch face for security, privacy, and battery reasons. Only Apple's Photos app and Watch app can set faces.")
+                .font(.system(size: 12, weight: .regular, design: .rounded))
+                .foregroundColor(.secondary)
+                .lineSpacing(2)
+
+            Divider()
+
+            Text("2 Easy Ways to Set Your Toddler Photo:")
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .foregroundColor(.primary)
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .top, spacing: 8) {
+                    Text("1.")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.blue)
+                    Text("**From Apple Photos app (Fastest):** Tap 'Save Photo for Watch Face' above. Open the **Photos** app, tap **Share** ➔ **Create Watch Face** ➔ choose **Photos Face**.")
+                        .font(.system(size: 12, weight: .regular, design: .rounded))
+                        .foregroundColor(.secondary)
+                }
+
+                HStack(alignment: .top, spacing: 8) {
+                    Text("2.")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.purple)
+                    Text("**Directly on Apple Watch:** Press and hold your watch display, swipe right to **+ (New)**, select **Photos**, and choose this toddler photo.")
+                        .font(.system(size: 12, weight: .regular, design: .rounded))
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+        .padding(16)
+        .background(Color(UIColor.secondarySystemBackground))
+        .cornerRadius(18)
     }
 
     // MARK: - How to Add Complication Card
