@@ -1,11 +1,18 @@
 import SwiftUI
 
-struct TouchBubble: Identifiable {
-    let id = UUID()
-    let x: CGFloat
-    let y: CGFloat
-    let symbol: String
-    let color: Color
+public struct TouchBubble: Identifiable {
+    public let id = UUID()
+    public let x: CGFloat
+    public let y: CGFloat
+    public let symbol: String
+    public let color: Color
+
+    public init(x: CGFloat, y: CGFloat, symbol: String, color: Color) {
+        self.x = x
+        self.y = y
+        self.symbol = symbol
+        self.color = color
+    }
 }
 
 public struct ToddlerLockOverlay: View {

@@ -6,11 +6,29 @@ import Combine
 
 public enum CameraLayoutMode: String, CaseIterable, Identifiable {
     case pip = "Picture-in-Picture"
+    case split = "Split"
 
     public var id: String { rawValue }
 
     public var iconName: String {
-        return "pip"
+        switch self {
+        case .pip: return "pip"
+        case .split: return "rectangle.split.2x1"
+        }
+    }
+}
+
+public enum CameraCaptureMode: String, CaseIterable, Identifiable {
+    case photo = "Photo"
+    case video = "Video"
+
+    public var id: String { rawValue }
+
+    public var iconName: String {
+        switch self {
+        case .photo: return "camera.fill"
+        case .video: return "video.fill"
+        }
     }
 }
 
@@ -49,10 +67,14 @@ public final class DualCameraManager: NSObject, ObservableObject {
     @Published public var isRunning: Bool = false
     @Published public var isMultiCamSupported: Bool = false
     @Published public var layoutMode: CameraLayoutMode = .pip
+    @Published public var captureMode: CameraCaptureMode = .photo
     @Published public var primaryPosition: ActiveCameraPosition = .back
     @Published public var isToddlerLocked: Bool = false
     @Published public var latestPhoto: CapturedDualPhoto?
+    @Published public var latestVideoURL: URL?
     @Published public var isCapturing: Bool = false
+    @Published public var isRecordingVideo: Bool = false
+    @Published public var videoRecordingDuration: TimeInterval = 0
     @Published public var activeSticker: String? = nil
     @Published public var showFlashAnimation: Bool = false
 
@@ -73,6 +95,18 @@ public final class DualCameraManager: NSObject, ObservableObject {
     @Published public var simulatedRearFrame: UIImage?
     private var cancellables = Set<AnyCancellable>()
 
+    // Store Listing Screenshot Automation Mode
+    @Published public var isStoreListingMode: Bool = false {
+        didSet {
+            if isStoreListingMode {
+                updateStoreListingFrames()
+            }
+        }
+    }
+    @Published public var storeListingBabyIsPrimary: Bool = true
+    @Published public var storeListingBabyFrame: UIImage?
+    @Published public var storeListingNatureFrame: UIImage?
+
     private var backPhotoOutput: AVCapturePhotoOutput?
     private var frontPhotoOutput: AVCapturePhotoOutput?
     private var frontVideoOutput: AVCaptureVideoDataOutput?
@@ -82,10 +116,23 @@ public final class DualCameraManager: NSObject, ObservableObject {
 
     public override init() {
         super.init()
+        let isStoreArg = CommandLine.arguments.contains("-storeListingMode") || ProcessInfo.processInfo.environment["STORE_LISTING_MODE"] == "1"
+        if isStoreArg {
+            self.isStoreListingMode = true
+        }
         setupVideoLoopers()
         startVideoPlayback()
         setupSimulatorStreamer()
         checkAndRequestCameraPermission()
+    }
+
+    public func updateStoreListingFrames() {
+        let baby = DualPhotoRenderer.renderBabyMockImage()
+        let nature = DualPhotoRenderer.renderNatureParkMockImage()
+        self.storeListingBabyFrame = baby
+        self.storeListingNatureFrame = nature
+        self.storeListingBabyIsPrimary = true
+        FaceTrackingManager.shared.mockBabyFaceDetection()
     }
 
     private func setupSimulatorStreamer() {
@@ -186,6 +233,7 @@ public final class DualCameraManager: NSObject, ObservableObject {
                     let conn = AVCaptureConnection(inputPort: backPort, videoPreviewLayer: layer)
                     if session.canAddConnection(conn) {
                         session.addConnection(conn)
+                        conn.videoOrientation = .portrait
                         self.backPreviewLayer = layer
                     }
 
@@ -195,6 +243,7 @@ public final class DualCameraManager: NSObject, ObservableObject {
                         let pConn = AVCaptureConnection(inputPorts: [backPort], output: photoOut)
                         if session.canAddConnection(pConn) {
                             session.addConnection(pConn)
+                            pConn.videoOrientation = .portrait
                             self.backPhotoOutput = photoOut
                         }
                     }
@@ -209,6 +258,8 @@ public final class DualCameraManager: NSObject, ObservableObject {
                     let conn = AVCaptureConnection(inputPort: frontPort, videoPreviewLayer: layer)
                     if session.canAddConnection(conn) {
                         session.addConnection(conn)
+                        conn.videoOrientation = .portrait
+                        conn.isVideoMirrored = true
                         self.frontPreviewLayer = layer
                     }
 
@@ -218,6 +269,8 @@ public final class DualCameraManager: NSObject, ObservableObject {
                         let pConn = AVCaptureConnection(inputPorts: [frontPort], output: photoOut)
                         if session.canAddConnection(pConn) {
                             session.addConnection(pConn)
+                            pConn.videoOrientation = .portrait
+                            pConn.isVideoMirrored = true
                             self.frontPhotoOutput = photoOut
                         }
                     }
@@ -340,6 +393,9 @@ public final class DualCameraManager: NSObject, ObservableObject {
 
     public func swapCameras() {
         SoundEffectManager.shared.play(.pop)
+        if isStoreListingMode {
+            storeListingBabyIsPrimary.toggle()
+        }
         primaryPosition = (primaryPosition == .back) ? .front : .back
     }
 
@@ -356,8 +412,85 @@ public final class DualCameraManager: NSObject, ObservableObject {
         }
     }
 
+    public func getCurrentFrames() -> (back: UIImage, front: UIImage) {
+        if isStoreListingMode {
+            let babyImg = storeListingBabyFrame ?? DualPhotoRenderer.renderBabyMockImage()
+            let natureImg = storeListingNatureFrame ?? DualPhotoRenderer.renderNatureParkMockImage()
+            return (back: natureImg, front: babyImg)
+        } else {
+            let backImg = simulatedRearFrame ?? captureCurrentVideoFrame(from: "rear_video") ?? DualPhotoRenderer.renderSimulatedBackCamera()
+            let frontImg = simulatedFrontFrame ?? captureCurrentVideoFrame(from: "front_video") ?? DualPhotoRenderer.renderSimulatedFrontCamera()
+            return (back: backImg, front: frontImg)
+        }
+    }
+
+    // MARK: - Mode Switching
+    public func setCaptureMode(_ mode: CameraCaptureMode) {
+        guard captureMode != mode else { return }
+        captureMode = mode
+        SoundEffectManager.shared.play(.pop)
+        WatchConnectivityManager.shared.syncStateToWatch()
+    }
+
+    public func toggleCaptureMode() {
+        captureMode = (captureMode == .photo) ? .video : .photo
+        SoundEffectManager.shared.play(.pop)
+        WatchConnectivityManager.shared.syncStateToWatch()
+    }
+
+    // MARK: - Video Recording Pipeline
+    public func startVideoRecording() {
+        guard !isRecordingVideo else { return }
+        isRecordingVideo = true
+        videoRecordingDuration = 0
+        SoundEffectManager.shared.play(.boing)
+        SoundEffectManager.shared.triggerHapticSuccess()
+        WatchConnectivityManager.shared.syncStateToWatch()
+
+        DualVideoRecorder.shared.startRecording(
+            videoSize: CGSize(width: 720, height: 960),
+            onDurationUpdate: { [weak self] duration in
+                DispatchQueue.main.async {
+                    self?.videoRecordingDuration = duration
+                }
+            },
+            completion: { [weak self] result in
+                guard let self = self else { return }
+                self.isRecordingVideo = false
+                switch result {
+                case .success(let url):
+                    self.latestVideoURL = url
+                    SoundEffectManager.shared.triggerHapticSuccess()
+                case .failure(let error):
+                    print("[DualCameraManager] Video recording error: \(error)")
+                }
+                WatchConnectivityManager.shared.syncStateToWatch()
+            }
+        )
+    }
+
+    public func stopVideoRecording() {
+        guard isRecordingVideo else { return }
+        isRecordingVideo = false
+        SoundEffectManager.shared.play(.pop)
+        DualVideoRecorder.shared.stopRecording()
+    }
+
+    public func toggleVideoRecording() {
+        if isRecordingVideo {
+            stopVideoRecording()
+        } else {
+            startVideoRecording()
+        }
+    }
+
     // MARK: - Capture Photo Pipeline
     public func capturePhoto() {
+        if captureMode == .video {
+            toggleVideoRecording()
+            return
+        }
+
         guard !isCapturing else { return }
         isCapturing = true
         showFlashAnimation = true
@@ -368,7 +501,9 @@ public final class DualCameraManager: NSObject, ObservableObject {
             self.showFlashAnimation = false
         }
 
-        if hasPhysicalCameras, isMultiCamSupported, let backOut = backPhotoOutput, let frontOut = frontPhotoOutput {
+        if isStoreListingMode {
+            captureFromStoreListingMode()
+        } else if hasPhysicalCameras, isMultiCamSupported, let backOut = backPhotoOutput, let frontOut = frontPhotoOutput {
             let backSettings = AVCapturePhotoSettings()
             let frontSettings = AVCapturePhotoSettings()
             pendingBackPhoto = nil
@@ -377,6 +512,36 @@ public final class DualCameraManager: NSObject, ObservableObject {
             frontOut.capturePhoto(with: frontSettings, delegate: self)
         } else {
             captureFromVideoFootage()
+        }
+    }
+
+    private func captureFromStoreListingMode() {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+
+            let babyImg = self.storeListingBabyFrame ?? DualPhotoRenderer.renderBabyMockImage()
+            let natureImg = self.storeListingNatureFrame ?? DualPhotoRenderer.renderNatureParkMockImage()
+
+            let composite = DualPhotoRenderer.composeDualPhoto(
+                backImage: natureImg,
+                frontImage: babyImg,
+                layout: self.layoutMode,
+                primaryPosition: self.storeListingBabyIsPrimary ? .front : .back,
+                filter: FaceTrackingManager.shared.activeFilter
+            )
+
+            let photo = CapturedDualPhoto(
+                compositeImage: composite,
+                frontImage: babyImg,
+                backImage: natureImg
+            )
+            self.saveToPhotoLibrary(photo: photo)
+
+            DispatchQueue.main.async {
+                self.latestPhoto = photo
+                self.isCapturing = false
+                SoundEffectManager.shared.triggerHapticSuccess()
+            }
         }
     }
 

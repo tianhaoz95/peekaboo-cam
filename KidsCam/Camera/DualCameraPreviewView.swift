@@ -3,8 +3,11 @@ import AVFoundation
 
 public struct DualCameraPreviewView: View {
     @ObservedObject var cameraManager = DualCameraManager.shared
+    public var onBackgroundTouch: ((CGPoint) -> Void)? = nil
 
-    public init() {}
+    public init(onBackgroundTouch: ((CGPoint) -> Void)? = nil) {
+        self.onBackgroundTouch = onBackgroundTouch
+    }
 
     public var body: some View {
         GeometryReader { geo in
@@ -80,6 +83,10 @@ public struct DualCameraPreviewView: View {
             // Main Fullscreen Feed - Fills 100% of the display edge-to-edge
             cameraFeed(position: cameraManager.primaryPosition, isPrimary: true, targetSize: screenSize)
                 .frame(width: screenSize.width, height: screenSize.height)
+                .contentShape(Rectangle())
+                .onTapGesture { location in
+                    onBackgroundTouch?(location)
+                }
                 .clipped()
 
             // Floating Secondary PiP Feed
@@ -124,11 +131,19 @@ public struct DualCameraPreviewView: View {
         .frame(width: screenSize.width, height: screenSize.height)
     }
 
-    // MARK: - Camera Feed (Physical Hardware or Live Looping Video Footage)
+    // MARK: - Camera Feed (Store Listing Mock, Physical Hardware, or Simulator Stream)
     @ViewBuilder
     private func cameraFeed(position: ActiveCameraPosition, isPrimary: Bool, targetSize: CGSize) -> some View {
+        let isBaby = cameraManager.isStoreListingMode ? (isPrimary == cameraManager.storeListingBabyIsPrimary) : (position == .front)
+
         ZStack {
-            if cameraManager.hasPhysicalCameras {
+            if cameraManager.isStoreListingMode {
+                if isBaby {
+                    storeListingBabyFeed(targetSize: targetSize)
+                } else {
+                    storeListingNatureFeed(targetSize: targetSize)
+                }
+            } else if cameraManager.hasPhysicalCameras {
                 if position == .back, let layer = cameraManager.backPreviewLayer {
                     CaptureVideoPreview(previewLayer: layer)
                         .frame(width: targetSize.width, height: targetSize.height)
@@ -143,11 +158,32 @@ public struct DualCameraPreviewView: View {
             }
 
             // Face Tracking Emoji Mask (Native Apple Vision Framework)
-            if position == .front {
+            // Follows whichever view hosts the baby / front face
+            if isBaby {
                 FaceTrackingEmojiOverlayView(isPrimary: isPrimary)
                     .frame(width: targetSize.width, height: targetSize.height)
             }
         }
+    }
+
+    @ViewBuilder
+    private func storeListingBabyFeed(targetSize: CGSize) -> some View {
+        let img = cameraManager.storeListingBabyFrame ?? DualPhotoRenderer.renderBabyMockImage()
+        Image(uiImage: img)
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .frame(width: targetSize.width, height: targetSize.height)
+            .clipped()
+    }
+
+    @ViewBuilder
+    private func storeListingNatureFeed(targetSize: CGSize) -> some View {
+        let img = cameraManager.storeListingNatureFrame ?? DualPhotoRenderer.renderNatureParkMockImage()
+        Image(uiImage: img)
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .frame(width: targetSize.width, height: targetSize.height)
+            .clipped()
     }
 
     @ViewBuilder

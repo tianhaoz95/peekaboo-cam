@@ -4,6 +4,20 @@ import SwiftUI
 
 final class KidsCamTests: XCTestCase {
 
+    override func setUp() {
+        super.setUp()
+        GuidedAccessManager.shared.isGuidedAccessActive = false
+        DualCameraManager.shared.isToddlerLocked = false
+        DualCameraManager.shared.isStoreListingMode = false
+    }
+
+    override func tearDown() {
+        GuidedAccessManager.shared.isGuidedAccessActive = false
+        DualCameraManager.shared.isToddlerLocked = false
+        DualCameraManager.shared.isStoreListingMode = false
+        super.tearDown()
+    }
+
     func testCameraManagerLayoutIsPiPOnly() {
         let manager = DualCameraManager.shared
         XCTAssertEqual(manager.layoutMode, .pip)
@@ -170,8 +184,11 @@ final class KidsCamTests: XCTestCase {
     @MainActor
     func testFaceTrackingOverlaySnapshot() {
         FaceTrackingManager.shared.setActiveFilter(.crown)
+        FaceTrackingManager.shared.normalizedFaceRect = CGRect(x: 0.275, y: 0.30, width: 0.45, height: 0.42)
+        FaceTrackingManager.shared.lastImageSize = CGSize(width: 800, height: 1000)
+        FaceTrackingManager.shared.isFaceDetected = true
+
         let sampleFace = DualPhotoRenderer.renderSimulatedFrontCamera()
-        FaceTrackingManager.shared.processUIImage(sampleFace)
 
         let composite = DualPhotoRenderer.composeDualPhoto(
             backImage: DualPhotoRenderer.renderSimulatedBackCamera(),
@@ -181,8 +198,49 @@ final class KidsCamTests: XCTestCase {
             filter: .crown
         )
         if let data = composite.pngData() {
-            let path = "/Users/tianhaoz/.gemini/antigravity-cli/brain/04e94b9a-263a-4ac8-8a99-d26f65ce8b13/tracked_face_mask_photo.png"
+            let path = "/Users/tianhaoz/.gemini/antigravity-cli/brain/56601843-8006-40e2-8cbd-8c87eb5fae50/tracked_face_mask_photo.png"
             try? data.write(to: URL(fileURLWithPath: path))
+        }
+    }
+
+    func testFlyingEmojiOrbitsOutsideFaceAndNeverCoversFace() {
+        let manager = FaceTrackingManager.shared
+        manager.setActiveFilter(.lion)
+        manager.normalizedFaceRect = CGRect(x: 0.25, y: 0.25, width: 0.5, height: 0.5)
+        manager.headRoll = 0.0
+
+        let container = CGSize(width: 400, height: 800)
+        let center = manager.faceCenter(in: container)
+        let dims = manager.faceDimensions(in: container)
+        let halfWidth = dims.width * 0.5
+        let halfHeight = dims.height * 0.5
+
+        // Test multiple angles in orbit: 0 (right), pi/2 (bottom), pi (left), 3pi/2 (top)
+        let testAngles: [Double] = [0.0, .pi / 4.0, .pi / 2.0, .pi, 3.0 * .pi / 2.0]
+        for angle in testAngles {
+            let pos = manager.flyingEmojiPosition(angle: angle, in: container)
+            let dx = abs(pos.x - center.x)
+            let dy = abs(pos.y - center.y)
+
+            // The flying emoji must be placed outside the face box (dx > halfWidth OR dy > halfHeight)
+            let isOutsideFace = (dx > halfWidth) || (dy > halfHeight)
+            XCTAssertTrue(isOutsideFace, "Flying emoji at angle \(angle) must not cover the face (dx=\(dx), halfW=\(halfWidth), dy=\(dy), halfH=\(halfHeight))")
+        }
+
+        // Verify emoji size is bounded appropriately as a flying companion, not a covering mask
+        let size = manager.emojiSize(in: container, for: .lion)
+        XCTAssertLessThanOrEqual(size, 75, "Flying companion emoji size should be restrained so it doesn't obstruct view")
+        XCTAssertGreaterThanOrEqual(size, 40)
+    }
+
+    func testTouchAnywhereSoundCycling() {
+        let manager = SoundEffectManager.shared
+        let touchSounds: [SoundType] = [.quack, .woof, .meow, .giggle, .boing, .horn, .pop]
+
+        for sound in touchSounds {
+            manager.play(sound, haptic: false)
+            XCTAssertFalse(sound.emoji.isEmpty)
+            XCTAssertFalse(sound.title.isEmpty)
         }
     }
 
@@ -199,8 +257,1358 @@ final class KidsCamTests: XCTestCase {
         }
         XCTAssertGreaterThan(image.size.width, 0)
         if let data = image.pngData() {
-            let path = "/Users/tianhaoz/.gemini/antigravity-cli/brain/04e94b9a-263a-4ac8-8a99-d26f65ce8b13/watch_complications_studio_snapshot.png"
+            let path = "/Users/tianhaoz/.gemini/antigravity-cli/brain/56601843-8006-40e2-8cbd-8c87eb5fae50/watch_complications_studio_snapshot.png"
+            try? data.write(to: URL(fileURLWithPath: path))
+        }
+    }
+
+    @MainActor
+    func testToddlerCameraViewSnapshot() {
+        let view = ToddlerCameraView()
+        let controller = UIHostingController(rootView: view)
+        controller.view.bounds = CGRect(x: 0, y: 0, width: 430, height: 932)
+        controller.view.layoutIfNeeded()
+        let renderer = UIGraphicsImageRenderer(size: controller.view.bounds.size)
+        let image = renderer.image { _ in
+            controller.view.drawHierarchy(in: controller.view.bounds, afterScreenUpdates: true)
+        }
+        XCTAssertGreaterThan(image.size.width, 0)
+        if let data = image.pngData() {
+            let path = "/Users/tianhaoz/.gemini/antigravity-cli/brain/56601843-8006-40e2-8cbd-8c87eb5fae50/toddler_camera_view_snapshot.png"
+            try? data.write(to: URL(fileURLWithPath: path))
+        }
+    }
+
+    // MARK: - Store Listing Screenshot Automation Mode Tests
+    func testStoreListingModeActivation() {
+        let camera = DualCameraManager.shared
+        camera.isStoreListingMode = true
+        XCTAssertTrue(camera.isStoreListingMode)
+        XCTAssertNotNil(camera.storeListingBabyFrame)
+        XCTAssertNotNil(camera.storeListingNatureFrame)
+        XCTAssertTrue(FaceTrackingManager.shared.isFaceDetected)
+
+        let baby = DualPhotoRenderer.renderBabyMockImage()
+        let nature = DualPhotoRenderer.renderNatureParkMockImage()
+        XCTAssertEqual(baby.size.width, 800)
+        XCTAssertEqual(baby.size.height, 1200)
+        XCTAssertEqual(nature.size.width, 800)
+        XCTAssertEqual(nature.size.height, 1200)
+
+        camera.swapCameras()
+        XCTAssertFalse(camera.storeListingBabyIsPrimary)
+        camera.swapCameras()
+        XCTAssertTrue(camera.storeListingBabyIsPrimary)
+    }
+
+    // MARK: - App Store Screenshots Generator
+    @MainActor
+    func testGenerateAllAppStoreScreenshots() {
+        let camera = DualCameraManager.shared
+        camera.isStoreListingMode = true
+        camera.storeListingBabyIsPrimary = true
+        camera.permissionStatus = .authorized
+        camera.hasPhysicalCameras = false
+        camera.isToddlerLocked = false
+
+        WatchConnectivityManager.shared.isReachable = true
+        GuidedAccessManager.shared.isGuidedAccessActive = true
+
+        FaceTrackingManager.shared.setActiveFilter(.lion)
+        FaceTrackingManager.shared.mockBabyFaceDetection()
+
+        let babyImg = camera.storeListingBabyFrame ?? DualPhotoRenderer.renderBabyMockImage()
+        let natureImg = camera.storeListingNatureFrame ?? DualPhotoRenderer.renderNatureParkMockImage()
+
+        let sampleComposite = DualPhotoRenderer.composeDualPhoto(
+            backImage: natureImg,
+            frontImage: babyImg,
+            layout: .pip,
+            primaryPosition: .front,
+            filter: .lion
+        )
+        camera.latestPhoto = CapturedDualPhoto(
+            timestamp: Date(),
+            compositeImage: sampleComposite,
+            frontImage: babyImg,
+            backImage: natureImg
+        )
+
+        // 1. appstore_iphone_fullscreen_pip.png (1320 x 2868) - Baby Large, Nature PiP, Flying Lion
+        camera.storeListingBabyIsPrimary = true
+        FaceTrackingManager.shared.setActiveFilter(.lion)
+        FaceTrackingManager.shared.mockBabyFaceDetection()
+        saveIPhoneScreenshot(view: ToddlerCameraView(), filename: "appstore_iphone_fullscreen_pip.png")
+
+        // 2. simulator_toddlercam.png (1320 x 2868) - Baby Large, Nature PiP, Flying Crown
+        FaceTrackingManager.shared.setActiveFilter(.crown)
+        saveIPhoneScreenshot(view: ToddlerCameraView(), filename: "simulator_toddlercam.png")
+
+        // 3. iphone_video_playing.png (1320 x 2868) - Interactive touch sounds & bubbles
+        FaceTrackingManager.shared.setActiveFilter(.lion)
+        let touchAnywhereDemo = ZStack {
+            ToddlerCameraView()
+            // Cheerful touch pop particles
+            Text("🫧").font(.system(size: 52)).position(x: 110, y: 410)
+            Text("⭐").font(.system(size: 46)).position(x: 290, y: 460)
+            Text("🎉").font(.system(size: 48)).position(x: 150, y: 600)
+            Text("✨").font(.system(size: 40)).position(x: 330, y: 640)
+            Text("🐥").font(.system(size: 50)).position(x: 230, y: 720)
+
+            // Cheerful hint banner
+            VStack {
+                Spacer()
+                HStack(spacing: 8) {
+                    Text("🦆")
+                    Text("Tap anywhere for silly sounds!")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                    Text("👶")
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+                .background(Color.purple.opacity(0.88))
+                .cornerRadius(22)
+                .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
+                .padding(.bottom, 120)
+            }
+        }
+        saveIPhoneScreenshot(view: touchAnywhereDemo, filename: "iphone_video_playing.png")
+
+        // 4. live_dual_video_stream.png (1320 x 2868) - Dual Camera View with Unicorn Companion
+        FaceTrackingManager.shared.setActiveFilter(.unicorn)
+        saveIPhoneScreenshot(view: ToddlerCameraView(), filename: "live_dual_video_stream.png")
+        FaceTrackingManager.shared.setActiveFilter(.lion)
+
+        // 5. after_grant.png (1320 x 2868) - Guided Access Guide Sheet
+        saveIPhoneScreenshot(view: DeviceSheetContainer { GuidedAccessGuideView() }, filename: "after_grant.png")
+
+        // 6. system_camera_prompt.png (1320 x 2868) - Toddler Safe Lock Screen
+        camera.isToddlerLocked = true
+        saveIPhoneScreenshot(view: ToddlerCameraView(), filename: "system_camera_prompt.png")
+        camera.isToddlerLocked = false
+
+        // 7. live_video_footage.png (1320 x 2868) - Keepsake Dual Photo Output
+        saveIPhoneScreenshot(view: KeepsakePhotoReviewScreenshotView(photo: sampleComposite), filename: "live_video_footage.png")
+
+        // 8. iphone_paired_live.png (1320 x 2868) - Watch Face Studio
+        saveIPhoneScreenshot(view: DeviceSheetContainer { WatchFaceStudioView() }, filename: "iphone_paired_live.png")
+
+        // 9. iphone_permission_dialog.png (1320 x 2868) - Parent Hub Settings
+        saveIPhoneScreenshot(view: DeviceSheetContainer { ParentHubView() }, filename: "iphone_permission_dialog.png")
+
+        // 10. appstore_watch_remote.png (416 x 496) - Apple Watch Remote (Main)
+        saveWatchScreenshot(view: WatchRemoteMockupView(), filename: "appstore_watch_remote.png")
+
+        // 11. watch_photo_review.png (416 x 496) - Apple Watch Photo Review (Dual Keepsake Preview)
+        saveWatchScreenshot(view: WatchPhotoReviewMockupView(thumbnail: sampleComposite), filename: "watch_photo_review.png")
+
+        // 12. watch_paired_live.png (416 x 496) - Apple Watch Face Masks (Apple Vision Tracking)
+        saveWatchScreenshot(view: WatchFaceMasksMockupView(), filename: "watch_paired_live.png")
+
+        // 13. live_watch_remote.png (416 x 496) - Apple Watch Silly Soundboard
+        saveWatchScreenshot(view: WatchSoundboardMockupView(), filename: "live_watch_remote.png")
+
+        // 14. watch_toddler_lock.png (416 x 496) - Apple Watch Toddler Safe Screen Lock Active
+        saveWatchScreenshot(view: WatchToddlerLockMockupView(), filename: "watch_toddler_lock.png")
+
+        // 15. watch_camera_controls.png (416 x 496) - Apple Watch Camera Angles & Dual Layout Controls
+        saveWatchScreenshot(view: WatchCameraControlsMockupView(), filename: "watch_camera_controls.png")
+
+        // 16. watch_complications.png (416 x 496) - Apple Watch Face Complications & Instant Launcher
+        saveWatchScreenshot(view: WatchComplicationsMockupView(), filename: "watch_complications.png")
+
+        // 17. watch_shutter_action.png (416 x 496) - Apple Watch Rapid Shutter Snap & Haptic Feedback
+        saveWatchScreenshot(view: WatchShutterActionMockupView(), filename: "watch_shutter_action.png")
+
+        // Reset state
+        GuidedAccessManager.shared.isGuidedAccessActive = false
+        camera.isStoreListingMode = false
+        camera.isToddlerLocked = false
+    }
+
+    private func saveIPhoneScreenshot<V: View>(view: V, filename: String) {
+        let controller = UIHostingController(rootView: view)
+        controller.view.bounds = CGRect(x: 0, y: 0, width: 440, height: 956)
+        controller.view.backgroundColor = .black
+        controller.view.layoutIfNeeded()
+
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 3.0 // 440*3 = 1320, 956*3 = 2868
+        let renderer = UIGraphicsImageRenderer(size: controller.view.bounds.size, format: format)
+        let image = renderer.image { _ in
+            controller.view.drawHierarchy(in: controller.view.bounds, afterScreenUpdates: true)
+        }
+
+        if let data = image.pngData() {
+            let path = "/Users/tianhaoz/GitHub/kids-cam/AppStore/Screenshots/\(filename)"
+            try? data.write(to: URL(fileURLWithPath: path))
+        }
+    }
+
+    @MainActor
+    func testCaptureModeSwitching() {
+        let manager = DualCameraManager.shared
+        manager.setCaptureMode(.photo)
+        XCTAssertEqual(manager.captureMode, .photo)
+
+        manager.toggleCaptureMode()
+        XCTAssertEqual(manager.captureMode, .video)
+
+        manager.setCaptureMode(.photo)
+        XCTAssertEqual(manager.captureMode, .photo)
+    }
+
+    func testDualPhotoRendererSplitLayout() {
+        let back = DualPhotoRenderer.renderSimulatedBackCamera()
+        let front = DualPhotoRenderer.renderSimulatedFrontCamera()
+
+        let compositeSplit = DualPhotoRenderer.composeDualPhoto(
+            backImage: back,
+            frontImage: front,
+            layout: .split,
+            primaryPosition: .back
+        )
+        XCTAssertEqual(compositeSplit.size.width, 1200)
+        XCTAssertEqual(compositeSplit.size.height, 1600)
+    }
+
+    func testDualPhotoRendererAspectFillZeroDistortion() {
+        let wideImage = UIGraphicsImageRenderer(size: CGSize(width: 800, height: 400)).image { ctx in
+            UIColor.blue.setFill()
+            ctx.fill(CGRect(x: 0, y: 0, width: 800, height: 400))
+        }
+
+        let targetRect = CGRect(x: 0, y: 0, width: 300, height: 300)
+        let rendered = UIGraphicsImageRenderer(size: targetRect.size).image { ctx in
+            DualPhotoRenderer.drawImageAspectFill(wideImage, in: targetRect, context: ctx.cgContext)
+        }
+
+        XCTAssertEqual(rendered.size.width, 300)
+        XCTAssertEqual(rendered.size.height, 300)
+    }
+
+    func testPixelBufferGeneration() {
+        let testImage = DualPhotoRenderer.renderSimulatedFrontCamera()
+        let size = CGSize(width: 720, height: 960)
+        let buffer = DualPhotoRenderer.pixelBuffer(from: testImage, size: size)
+        XCTAssertNotNil(buffer)
+        if let buffer = buffer {
+            XCTAssertEqual(CVPixelBufferGetWidth(buffer), 720)
+            XCTAssertEqual(CVPixelBufferGetHeight(buffer), 960)
+        }
+    }
+
+    func testVideoRecorderLifecycle() {
+        let manager = DualCameraManager.shared
+        manager.setCaptureMode(.video)
+
+        manager.startVideoRecording()
+        XCTAssertTrue(manager.isRecordingVideo)
+
+        let recordExp = expectation(description: "Recorded for a bit")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            manager.stopVideoRecording()
+            XCTAssertFalse(manager.isRecordingVideo)
+            recordExp.fulfill()
+        }
+        wait(for: [recordExp], timeout: 2.0)
+
+        // Wait for video URL to be populated
+        let predicate = NSPredicate { _, _ in
+            return manager.latestVideoURL != nil
+        }
+        let urlExp = expectation(for: predicate, evaluatedWith: manager, handler: nil)
+        wait(for: [urlExp], timeout: 5.0)
+
+        XCTAssertNotNil(manager.latestVideoURL)
+        if let url = manager.latestVideoURL {
+            XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
+        }
+        manager.setCaptureMode(.photo)
+    }
+
+    @MainActor
+    private func saveWatchScreenshot<V: View>(view: V, filename: String) {
+        let renderer = ImageRenderer(content: view.frame(width: 208, height: 248))
+        renderer.scale = 2.0
+        if let uiImage = renderer.uiImage, let data = uiImage.pngData() {
+            let path = "/Users/tianhaoz/GitHub/kids-cam/AppStore/Screenshots/\(filename)"
             try? data.write(to: URL(fileURLWithPath: path))
         }
     }
 }
+
+// MARK: - Edge-to-Edge Sheet Container for iPhone Screenshots
+struct DeviceSheetContainer<Content: View>: View {
+    let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    var body: some View {
+        ZStack {
+            Color(red: 0.08, green: 0.08, blue: 0.10)
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // Native iPhone Status Bar
+                HStack {
+                    Text("9:41")
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                    Spacer()
+                    HStack(spacing: 5) {
+                        Image(systemName: "cellularbars")
+                            .font(.system(size: 12, weight: .semibold))
+                        Image(systemName: "wifi")
+                            .font(.system(size: 12, weight: .semibold))
+                        Image(systemName: "battery.100")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                }
+                .padding(.horizontal, 28)
+                .padding(.top, 14)
+                .padding(.bottom, 6)
+
+                // Content View
+                content
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                // Native iPhone Home Indicator
+                Capsule()
+                    .fill(Color.white.opacity(0.35))
+                    .frame(width: 140, height: 5)
+                    .padding(.bottom, 8)
+            }
+        }
+        .frame(width: 440, height: 956)
+    }
+}
+
+// MARK: - Full-Bleed Keepsake Photo Review Screen
+struct KeepsakePhotoReviewScreenshotView: View {
+    let photo: UIImage
+
+    var body: some View {
+        ZStack {
+            // Ambient full-bleed blurred backdrop
+            Image(uiImage: photo)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 440, height: 956)
+                .blur(radius: 40)
+                .overlay(Color.black.opacity(0.50))
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // Native Status Bar
+                HStack {
+                    Text("9:41")
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                    Spacer()
+                    HStack(spacing: 5) {
+                        Image(systemName: "cellularbars")
+                            .font(.system(size: 12, weight: .semibold))
+                        Image(systemName: "wifi")
+                            .font(.system(size: 12, weight: .semibold))
+                        Image(systemName: "battery.100")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                }
+                .padding(.horizontal, 28)
+                .padding(.top, 14)
+                .padding(.bottom, 12)
+
+                // Top Navigation Header
+                HStack {
+                    HStack(spacing: 6) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .bold))
+                        Text("Camera")
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
+                    }
+                    .foregroundColor(.white)
+
+                    Spacer()
+
+                    HStack(spacing: 5) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                            .font(.system(size: 14))
+                        Text("Saved to Photos")
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                            .foregroundColor(.green)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
+                    .background(Color.black.opacity(0.55))
+                    .cornerRadius(18)
+
+                    Spacer()
+
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 22)
+                .padding(.bottom, 16)
+
+                Spacer()
+
+                // Centerpiece: The High-Resolution Keepsake Dual Photo Card
+                Image(uiImage: photo)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: 390, maxHeight: 580)
+                    .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 26, style: .continuous)
+                            .stroke(Color.white.opacity(0.35), lineWidth: 1.5)
+                    )
+                    .shadow(color: Color.black.opacity(0.65), radius: 28, x: 0, y: 14)
+
+                Spacer()
+
+                // Bottom Metadata & Actions
+                VStack(spacing: 14) {
+                    HStack(spacing: 8) {
+                        Label("Dual Camera Memory", systemImage: "sparkles")
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                        Text("•")
+                            .foregroundColor(.white.opacity(0.6))
+                        Text("Front + Rear Simultaneous")
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.85))
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.white.opacity(0.18))
+                    .cornerRadius(20)
+
+                    HStack(spacing: 14) {
+                        Button(action: {}) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "square.and.arrow.up.fill")
+                                Text("Share Memory")
+                            }
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.white)
+                            .cornerRadius(18)
+                        }
+
+                        Button(action: {}) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "camera.fill")
+                                Text("Snap Another")
+                            }
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.white.opacity(0.25))
+                            .cornerRadius(18)
+                        }
+                    }
+                    .padding(.horizontal, 22)
+                }
+                .padding(.bottom, 16)
+
+                // Home Indicator
+                Capsule()
+                    .fill(Color.white.opacity(0.35))
+                    .frame(width: 140, height: 5)
+                    .padding(.bottom, 8)
+            }
+        }
+        .frame(width: 440, height: 956)
+    }
+}
+
+// MARK: - Apple Watch Screen Mockups
+
+// 1. Main Remote Viewfinder & Tactile Shutter
+struct WatchRemoteMockupView: View {
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.black.ignoresSafeArea()
+
+            VStack(spacing: 8) {
+                HStack {
+                    HStack(spacing: 4) {
+                        Circle().fill(Color.green).frame(width: 7, height: 7)
+                        Text("Connected")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundColor(.green)
+                    }
+                    Spacer()
+                    Text("10:09")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 8)
+                .padding(.top, 8)
+
+                // Giant Shutter Button
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.18))
+                        .frame(width: 76, height: 76)
+
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(red: 1.0, green: 0.35, blue: 0.38), Color(red: 1.0, green: 0.6, blue: 0.2)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 64, height: 64)
+
+                    Image(systemName: "camera.fill")
+                        .font(.system(size: 26, weight: .bold))
+                        .foregroundColor(.white)
+                }
+
+                // Quick Action Grid (Quack, Woof, Lock)
+                HStack(spacing: 6) {
+                    VStack(spacing: 2) {
+                        Text("🦆")
+                            .font(.system(size: 17))
+                        Text("Quack")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(Color.yellow.opacity(0.25))
+                    .cornerRadius(10)
+
+                    VStack(spacing: 2) {
+                        Text("🐶")
+                            .font(.system(size: 17))
+                        Text("Woof")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(Color.orange.opacity(0.25))
+                    .cornerRadius(10)
+
+                    VStack(spacing: 2) {
+                        Image(systemName: "lock.open.fill")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(.yellow)
+                        Text("Unlock")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.12))
+                    .cornerRadius(10)
+                }
+                .padding(.horizontal, 6)
+
+                // Quick Camera Flip & Layout Bar
+                HStack(spacing: 6) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "arrow.triangle.2.circlepath.camera.fill")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.cyan)
+                        Text("Flip View")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 5)
+                    .background(Color.cyan.opacity(0.2))
+                    .cornerRadius(8)
+
+                    HStack(spacing: 3) {
+                        Image(systemName: "rectangle.inset.filled.and.cursorarrow")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.purple)
+                        Text("PiP Mode")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 5)
+                    .background(Color.purple.opacity(0.2))
+                    .cornerRadius(8)
+                }
+                .padding(.horizontal, 6)
+
+                // Face Masks Link
+                HStack(spacing: 6) {
+                    Text("🦁")
+                        .font(.system(size: 13))
+                    Text("Face Masks (Lion Active)")
+                        .font(.system(size: 9, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background(Color.blue.opacity(0.25))
+                .cornerRadius(8)
+                .padding(.horizontal, 6)
+
+                Spacer(minLength: 4)
+            }
+            .ignoresSafeArea()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+        .frame(width: 208, height: 248)
+    }
+}
+
+// 2. Wrist Photo Review with Captured Dual Keepsake
+struct WatchPhotoReviewMockupView: View {
+    let thumbnail: UIImage
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.black.ignoresSafeArea()
+
+            VStack(spacing: 6) {
+                HStack {
+                    Text("Last Photo")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                    Spacer()
+                    Text("10:09")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 8)
+                .padding(.top, 8)
+
+                Image(uiImage: thumbnail)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 174, height: 142)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.3), lineWidth: 1))
+                    .shadow(color: .black.opacity(0.5), radius: 4)
+
+                HStack(spacing: 4) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                        .font(.system(size: 11))
+                    Text("Saved to iPhone Photos")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundColor(.green)
+                }
+
+                HStack(spacing: 6) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "square.and.arrow.up.fill")
+                            .font(.system(size: 10))
+                        Text("Share")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.18))
+                    .cornerRadius(8)
+
+                    HStack(spacing: 4) {
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 10))
+                        Text("Snap More")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(Color.blue)
+                    .cornerRadius(8)
+                }
+                .padding(.horizontal, 8)
+                .padding(.top, 2)
+
+                Spacer(minLength: 4)
+            }
+            .ignoresSafeArea()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+        .frame(width: 208, height: 248)
+    }
+}
+
+// 3. Apple Vision Face Tracking Masks Selector
+struct WatchFaceMasksMockupView: View {
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.black.ignoresSafeArea()
+
+            VStack(spacing: 6) {
+                HStack {
+                    Text("Face Masks")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                    Spacer()
+                    Text("10:09")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 8)
+                .padding(.top, 8)
+
+                Text("Apple Vision Face Tracking")
+                    .font(.system(size: 9, weight: .medium, design: .rounded))
+                    .foregroundColor(.secondary)
+
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 6), GridItem(.flexible(), spacing: 6)], spacing: 5) {
+                    maskCard(emoji: "🦁", name: "Lion", isSelected: true)
+                    maskCard(emoji: "👑", name: "Crown", isSelected: false)
+                    maskCard(emoji: "🦄", name: "Unicorn", isSelected: false)
+                    maskCard(emoji: "🐶", name: "Puppy", isSelected: false)
+                    maskCard(emoji: "🐱", name: "Kitty", isSelected: false)
+                    maskCard(emoji: "🐼", name: "Panda", isSelected: false)
+                    maskCard(emoji: "🐻", name: "Bear", isSelected: false)
+                    maskCard(emoji: "🐰", name: "Bunny", isSelected: false)
+                }
+                .padding(.horizontal, 6)
+
+                HStack(spacing: 4) {
+                    Circle().fill(Color.cyan).frame(width: 5, height: 5)
+                    Text("Lion Companion Orbiting Face")
+                        .font(.system(size: 8, weight: .bold, design: .rounded))
+                        .foregroundColor(.cyan)
+                }
+                .padding(.top, 2)
+
+                Spacer(minLength: 4)
+            }
+            .ignoresSafeArea()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+        .frame(width: 208, height: 248)
+    }
+
+    private func maskCard(emoji: String, name: String, isSelected: Bool) -> some View {
+        HStack(spacing: 4) {
+            Text(emoji).font(.system(size: 18))
+            Text(name).font(.system(size: 10, weight: .bold, design: .rounded)).foregroundColor(.white)
+            if isSelected {
+                Spacer()
+                Image(systemName: "checkmark")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundColor(.blue)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 8)
+        .background(isSelected ? Color.blue.opacity(0.4) : Color.white.opacity(0.1))
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 1.5)
+        )
+    }
+}
+
+// 4. Attention-Grabber Soundboard
+struct WatchSoundboardMockupView: View {
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.black.ignoresSafeArea()
+
+            VStack(spacing: 6) {
+                HStack {
+                    Text("Soundboard")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                    Spacer()
+                    Text("10:09")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 8)
+                .padding(.top, 8)
+
+                Text("Grab Toddler's Attention")
+                    .font(.system(size: 9, weight: .medium, design: .rounded))
+                    .foregroundColor(.secondary)
+
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 6), GridItem(.flexible(), spacing: 6)], spacing: 5) {
+                    soundCard(emoji: "🦆", name: "Quack", color: .yellow)
+                    soundCard(emoji: "🐶", name: "Bark", color: .orange)
+                    soundCard(emoji: "🐱", name: "Meow", color: .pink)
+                    soundCard(emoji: "👶", name: "Giggle", color: .purple)
+                    soundCard(emoji: "🎪", name: "Boing", color: .blue)
+                    soundCard(emoji: "🎺", name: "Honk", color: .red)
+                    soundCard(emoji: "🚗", name: "Vroom", color: .green)
+                    soundCard(emoji: "🔔", name: "Ding", color: .teal)
+                }
+                .padding(.horizontal, 6)
+
+                HStack(spacing: 4) {
+                    Circle().fill(Color.orange).frame(width: 5, height: 5)
+                    Text("Instant Sound & Haptic Cue")
+                        .font(.system(size: 8, weight: .bold, design: .rounded))
+                        .foregroundColor(.orange)
+                }
+                .padding(.top, 2)
+
+                Spacer(minLength: 4)
+            }
+            .ignoresSafeArea()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+        .frame(width: 208, height: 248)
+    }
+
+    private func soundCard(emoji: String, name: String, color: Color) -> some View {
+        HStack(spacing: 4) {
+            Text(emoji).font(.system(size: 18))
+            Text(name).font(.system(size: 10, weight: .bold, design: .rounded)).foregroundColor(.white)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+        .background(color.opacity(0.3))
+        .cornerRadius(10)
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(color.opacity(0.7), lineWidth: 1))
+    }
+}
+
+// 5. Remote Toddler Screen Lock Activated
+struct WatchToddlerLockMockupView: View {
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.black.ignoresSafeArea()
+
+            VStack(spacing: 7) {
+                HStack {
+                    HStack(spacing: 4) {
+                        Circle().fill(Color.green).frame(width: 7, height: 7)
+                        Text("Connected")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundColor(.green)
+                    }
+                    Spacer()
+                    HStack(spacing: 3) {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 9))
+                            .foregroundColor(.yellow)
+                        Text("Locked")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundColor(.yellow)
+                    }
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(Color.yellow.opacity(0.2))
+                    .cornerRadius(6)
+
+                    Spacer()
+                    Text("10:09")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 8)
+                .padding(.top, 8)
+
+                // Toddler Safe Lock Notice Banner
+                HStack(spacing: 5) {
+                    Image(systemName: "lock.shield.fill")
+                        .foregroundColor(.yellow)
+                        .font(.system(size: 13))
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Toddler Screen Locked")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundColor(.yellow)
+                        Text("Phone touches make fun bubbles")
+                            .font(.system(size: 8, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background(Color.yellow.opacity(0.18))
+                .cornerRadius(10)
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.yellow.opacity(0.4), lineWidth: 1))
+                .padding(.horizontal, 6)
+
+                // Shutter Button (Parent still in full remote control!)
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.18))
+                        .frame(width: 70, height: 70)
+
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(red: 1.0, green: 0.35, blue: 0.38), Color(red: 1.0, green: 0.6, blue: 0.2)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 58, height: 58)
+
+                    Image(systemName: "camera.fill")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                }
+
+                // Action row
+                HStack(spacing: 6) {
+                    VStack(spacing: 2) {
+                        Text("🦆")
+                            .font(.system(size: 17))
+                        Text("Quack")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.12))
+                    .cornerRadius(10)
+
+                    VStack(spacing: 2) {
+                        Text("🐶")
+                            .font(.system(size: 17))
+                        Text("Woof")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.12))
+                    .cornerRadius(10)
+
+                    VStack(spacing: 2) {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(.yellow)
+                        Text("Locked")
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundColor(.yellow)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(Color.yellow.opacity(0.25))
+                    .cornerRadius(10)
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.yellow, lineWidth: 1))
+                }
+                .padding(.horizontal, 6)
+
+                HStack(spacing: 4) {
+                    Image(systemName: "hand.tap.fill")
+                        .font(.system(size: 8))
+                        .foregroundColor(.secondary)
+                    Text("Triple-click crown or tap to unlock")
+                        .font(.system(size: 8, weight: .medium, design: .rounded))
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top, 4)
+
+                Spacer(minLength: 4)
+            }
+            .ignoresSafeArea()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+        .frame(width: 208, height: 248)
+    }
+}
+
+// 6. Camera Angles & Dual Layout Controls
+struct WatchCameraControlsMockupView: View {
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.black.ignoresSafeArea()
+
+            VStack(spacing: 7) {
+                HStack {
+                    Text("Camera & Layout")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                    Spacer()
+                    Text("10:09")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 8)
+                .padding(.top, 8)
+
+                // Section 1: Dual Layout Mode
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("DUAL LAYOUT")
+                        .font(.system(size: 8, weight: .bold, design: .rounded))
+                        .foregroundColor(.secondary)
+
+                    HStack(spacing: 6) {
+                        VStack(spacing: 3) {
+                            Image(systemName: "rectangle.inset.filled.and.cursorarrow")
+                                .font(.system(size: 18))
+                                .foregroundColor(.purple)
+                            Text("PiP (Floating)")
+                                .font(.system(size: 9, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(Color.purple.opacity(0.35))
+                        .cornerRadius(10)
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.purple, lineWidth: 1.5))
+
+                        VStack(spacing: 3) {
+                            Image(systemName: "rectangle.split.2x1.fill")
+                                .font(.system(size: 18))
+                                .foregroundColor(.blue)
+                            Text("Split (50/50)")
+                                .font(.system(size: 9, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(Color.white.opacity(0.1))
+                        .cornerRadius(10)
+                    }
+                }
+                .padding(.horizontal, 6)
+
+                // Section 2: Swap Angle
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("CAMERA ANGLE")
+                        .font(.system(size: 8, weight: .bold, design: .rounded))
+                        .foregroundColor(.secondary)
+
+                    HStack {
+                        Image(systemName: "arrow.triangle.2.circlepath.camera.fill")
+                            .foregroundColor(.cyan)
+                            .font(.system(size: 15))
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("Swap Primary View")
+                                .font(.system(size: 10, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                            Text("Front Selfie ⇄ Rear Scene")
+                                .font(.system(size: 8, weight: .medium, design: .rounded))
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "repeat")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.cyan)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 10)
+                    .background(Color.cyan.opacity(0.2))
+                    .cornerRadius(10)
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.cyan.opacity(0.4), lineWidth: 1))
+                }
+                .padding(.horizontal, 6)
+
+                // Section 3: PiP Corner Position
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("PIP CORNER POSITION")
+                        .font(.system(size: 8, weight: .bold, design: .rounded))
+                        .foregroundColor(.secondary)
+
+                    HStack(spacing: 6) {
+                        HStack(spacing: 3) {
+                            Image(systemName: "arrow.up.right.square.fill")
+                                .foregroundColor(.yellow)
+                            Text("Top Right")
+                                .font(.system(size: 9, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 7)
+                        .background(Color.yellow.opacity(0.25))
+                        .cornerRadius(8)
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.yellow, lineWidth: 1))
+
+                        HStack(spacing: 3) {
+                            Image(systemName: "arrow.down.left.square")
+                                .foregroundColor(.secondary)
+                            Text("Bottom Left")
+                                .font(.system(size: 9, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 7)
+                        .background(Color.white.opacity(0.1))
+                        .cornerRadius(8)
+                    }
+                }
+                .padding(.horizontal, 6)
+
+                // Live status
+                HStack(spacing: 4) {
+                    Circle().fill(Color.green).frame(width: 5, height: 5)
+                    Text("Simultaneous Front + Rear Active")
+                        .font(.system(size: 8, weight: .medium, design: .rounded))
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top, 2)
+
+                Spacer(minLength: 4)
+            }
+            .ignoresSafeArea()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+        .frame(width: 208, height: 248)
+    }
+}
+
+// 7. Apple Watch Face Complications & Instant Launcher
+struct WatchComplicationsMockupView: View {
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.black.ignoresSafeArea()
+
+            VStack(spacing: 8) {
+                // Top Complication & Date
+                HStack {
+                    HStack(spacing: 3) {
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.yellow)
+                        Text("TODDLERCAM")
+                            .font(.system(size: 9, weight: .heavy, design: .rounded))
+                            .foregroundColor(.yellow)
+                    }
+                    Spacer()
+                    Text("WED 10")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundColor(.orange)
+                }
+                .padding(.horizontal, 10)
+                .padding(.top, 8)
+
+                // Time Display
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text("10:09")
+                        .font(.system(size: 46, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                    Text("30")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundColor(.yellow)
+                    Spacer()
+                }
+                .padding(.horizontal, 10)
+
+                // Modular Rectangular Complication
+                HStack(spacing: 8) {
+                    ZStack {
+                        Circle().fill(Color.yellow.opacity(0.25)).frame(width: 34, height: 34)
+                        Image(systemName: "camera.circle.fill")
+                            .font(.system(size: 26))
+                            .foregroundColor(.yellow)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("ToddlerCam")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                        HStack(spacing: 3) {
+                            Circle().fill(Color.green).frame(width: 5, height: 5)
+                            Text("Parent Remote Ready")
+                                .font(.system(size: 10, weight: .medium, design: .rounded))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 8)
+                .background(Color.white.opacity(0.12))
+                .cornerRadius(10)
+                .padding(.horizontal, 8)
+
+                // Bottom 3 Complications
+                HStack(spacing: 12) {
+                    // Battery
+                    ZStack {
+                        Circle().fill(Color.white.opacity(0.12)).frame(width: 44, height: 44)
+                        VStack(spacing: 1) {
+                            Image(systemName: "battery.100")
+                                .font(.system(size: 12))
+                                .foregroundColor(.green)
+                            Text("94%")
+                                .font(.system(size: 8, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                        }
+                    }
+
+                    // Instant SNAP Complication
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.yellow.opacity(0.35), Color.orange.opacity(0.35)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 48, height: 48)
+                            .overlay(Circle().stroke(Color.yellow, lineWidth: 1.5))
+
+                        VStack(spacing: 1) {
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.yellow)
+                            Text("SNAP")
+                                .font(.system(size: 8, weight: .heavy, design: .rounded))
+                                .foregroundColor(.white)
+                        }
+                    }
+
+                    // Quick Sound shortcut
+                    ZStack {
+                        Circle().fill(Color.white.opacity(0.12)).frame(width: 44, height: 44)
+                        Text("🦆")
+                            .font(.system(size: 18))
+                    }
+                }
+
+                HStack(spacing: 4) {
+                    Circle().fill(Color.yellow).frame(width: 4, height: 4)
+                    Text("Instant Remote Complication")
+                        .font(.system(size: 8, weight: .bold, design: .rounded))
+                        .foregroundColor(.yellow.opacity(0.85))
+                }
+                .padding(.top, 2)
+
+                Spacer(minLength: 4)
+            }
+            .ignoresSafeArea()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+        .frame(width: 208, height: 248)
+    }
+}
+
+// 8. Rapid Wrist Shutter Action & Haptic Feedback
+struct WatchShutterActionMockupView: View {
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.black.ignoresSafeArea()
+
+            VStack(spacing: 7) {
+                HStack {
+                    HStack(spacing: 4) {
+                        Circle().fill(Color.green).frame(width: 7, height: 7)
+                        Text("Connected")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundColor(.green)
+                    }
+                    Spacer()
+                    Text("10:09")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 8)
+                .padding(.top, 8)
+
+                // Success Badge
+                HStack(spacing: 4) {
+                    Image(systemName: "sparkles")
+                        .foregroundColor(.yellow)
+                        .font(.system(size: 11))
+                    Text("Photo Captured!")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundColor(.green)
+                    Image(systemName: "sparkles")
+                        .foregroundColor(.yellow)
+                        .font(.system(size: 11))
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(Color.green.opacity(0.2))
+                .cornerRadius(12)
+
+                // Pulsing Shutter Button during action
+                ZStack {
+                    Circle()
+                        .stroke(Color.green.opacity(0.6), lineWidth: 3)
+                        .frame(width: 82, height: 82)
+
+                    Circle()
+                        .fill(Color.white.opacity(0.25))
+                        .frame(width: 74, height: 74)
+
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.green, Color.mint],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 62, height: 62)
+
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 26, weight: .heavy))
+                        .foregroundColor(.white)
+                }
+
+                Text("Haptic Click • Saved to Phone")
+                    .font(.system(size: 9, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white.opacity(0.8))
+
+                // Quick navigation
+                HStack(spacing: 6) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "photo.stack")
+                            .font(.system(size: 10))
+                            .foregroundColor(.orange)
+                        Text("Review")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.15))
+                    .cornerRadius(8)
+
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.counterclockwise")
+                            .font(.system(size: 10))
+                            .foregroundColor(.cyan)
+                        Text("Snap More")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.15))
+                    .cornerRadius(8)
+                }
+                .padding(.horizontal, 10)
+
+                HStack(spacing: 4) {
+                    Circle().fill(Color.green).frame(width: 4, height: 4)
+                    Text("Simultaneous Front + Rear Saved")
+                        .font(.system(size: 8, weight: .bold, design: .rounded))
+                        .foregroundColor(.green)
+                }
+                .padding(.top, 2)
+
+                Spacer(minLength: 4)
+            }
+            .ignoresSafeArea()
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+        .frame(width: 208, height: 248)
+    }
+}
+

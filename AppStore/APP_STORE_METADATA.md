@@ -14,17 +14,23 @@
 
 ---
 
-## 2. Version Information (v1.0.0)
+## 2. Version Information (v1.2.0, Build 4)
+
+### What's New in Version 1.2.0:
+• **Dual Camera Video Recording:** Record joyful dual-camera videos capturing both your toddler and your reaction in real-time!
+• **Apple Watch Video Remote:** Switch between Photo and Video modes from your wrist with start/stop recording controls, live recording timers, and haptic feedback.
+• **Zero-Distortion Aspect Ratio:** Enhanced multi-camera composition engine ensures all captured photos and videos maintain their natural aspect ratios with zero stretching or distortion.
+• **Video Gallery & Sharing:** Review recorded dual videos with built-in playback and share them directly with family and friends.
 
 ### Promotional Text (170 characters max)
-> Capture both your toddler and your reaction at once! Includes Apple Watch parent remote, child-safe screen lock, and Guided Access protection.
+> Capture both your toddler and your reaction at once! Now supporting dual video recording, Apple Watch video remote, child-safe screen lock, and Guided Access protection.
 
 ### Subtitle (30 characters max)
 > Dual Camera & Watch Remote
 
 ### Keywords (100 characters max, comma-separated)
 ```
-toddler camera,baby camera,kids camera,dual camera,watch remote,guided access,child safe,baby photos
+toddler camera,baby camera,kids camera,dual camera,dual video,watch remote,guided access,baby photos
 ```
 *(Exact length: 99 characters)*
 
@@ -32,11 +38,16 @@ toddler camera,baby camera,kids camera,dual camera,watch remote,guided access,ch
 ```
 ToddlerCam is the ultimate child-friendly camera designed especially for babies, toddlers, and playful parents! 
 
-Turn photography into a joyful interactive adventure with simultaneous front-and-rear dual camera capture, tactile toddler controls, and a companion Apple Watch remote that lets parents capture the magic without taking the phone away from little hands.
+Turn photography and home videos into a joyful interactive adventure with simultaneous front-and-rear dual camera capture, tactile toddler controls, and a companion Apple Watch remote that lets parents capture the magic without taking the phone away from little hands.
 
 ✨ KEY FEATURES:
 
-📸 DUAL CAMERA CAPTURE (Front + Rear Together)
+🎥 DUAL CAMERA VIDEO RECORDING (New!)
+• Capture living memories with simultaneous front and rear video recording!
+• Full edge-to-edge PiP and split-screen video recording with 30fps smooth performance.
+• Start and stop recording either on iPhone or remotely from your Apple Watch.
+
+📸 DUAL CAMERA PHOTO CAPTURE
 • See what your toddler is looking at AND their priceless smile simultaneously!
 • 100% Edge-to-edge Picture-in-Picture (PiP) fullscreen dual preview.
 • Tap floating PiP card or watch remote to seamlessly swap primary and selfie angles.
@@ -138,29 +149,26 @@ Contact Email: review-contact@hejitech.com
 
 ---
 
-## 7. Screenshot Mockup Copy & Suggested Slides
+## 7. Screenshot Assets & Copy
 
-### Slide 1 (Hero Dual Camera)
-* **Headline:** Dual Camera Fun for Little Hands
-* **Subhead:** Capture both your baby's smile and their world at once!
-* **Visual:** Picture-in-Picture layout showing toddler selfie + toy room.
+### A. iPhone Screenshots (6.9" Display — 1320 x 2868)
+1. **`appstore_iphone_fullscreen_pip.png`**: Dual Camera Fun (Baby selfie large view + State Park PiP + orbiting Lion companion).
+2. **`simulator_toddlercam.png`**: Magical Face Masks (Baby selfie large view + State Park PiP + orbiting Royal Crown).
+3. **`iphone_video_playing.png`**: Interactive Sound Canvas (Touch anywhere for bubbly giggles, duck quacks, and pop particles).
+4. **`live_dual_video_stream.png`**: Dual Camera Preview (Baby selfie large view + State Park PiP + orbiting Unicorn companion).
+5. **`after_grant.png`**: Apple Guided Access Parent Tutorial (Step-by-step 4-step locking guide).
+6. **`system_camera_prompt.png`**: Toddler Safe Screen Lock (Child-proof touch protection overlay with unlock challenge).
+7. **`live_video_footage.png`**: Keepsake Dual Photo Output (Saved composite memory with baby and scenic park).
+8. **`iphone_paired_live.png`**: Watch Face & Complication Studio (Complication setup and preview).
+9. **`iphone_permission_dialog.png`**: Parent Hub & Settings (Safe parental gate and controls).
 
-### Slide 2 (Watch Remote Control)
-* **Headline:** Parent Apple Watch Remote
-* **Subhead:** Snap photos & play silly animal sounds right from your wrist!
-* **Visual:** Apple Watch screen showing big shutter button & Quack/Woof soundboard.
+### B. Apple Watch Companion Screenshots (416 x 496)
+1. **`appstore_watch_remote.png`**: Parent Remote Control (Giant tactile wrist shutter, Quack/Woof sounds, quick layout & flip bar, live connection).
+2. **`watch_photo_review.png`**: Instant Wrist Photo Review (Just-captured dual keepsake thumbnail preview right on parent's wrist).
+3. **`watch_paired_live.png`**: Apple Vision Face Masks (Remote selector with live tracking status and active mask highlight).
+4. **`live_watch_remote.png`**: Silly Soundboard (Quack, Puppy, Kitty, Giggle, Boing, Horn attention grabbers).
+5. **`watch_toddler_lock.png`**: Remote Toddler Screen Lock (Shows active childproof lock banner, safe touch canvas indicator, and active remote shutter).
+6. **`watch_camera_controls.png`**: Camera Angle & Dual Layout Controls (Switch PiP vs Split screen and swap front/rear angles remotely).
+7. **`watch_complications.png`**: Watch Face Complications (Modular Apple Watch Face with 1-tap SNAP button, status widget, and shortcuts).
+8. **`watch_shutter_action.png`**: Rapid Shutter Action & Haptic Feedback (Wrist snap feedback pulse and instant phone save confirmation).
 
-### Slide 3 (Guided Access & Toddler Lock)
-* **Headline:** 100% Toddler Safe
-* **Subhead:** Guided Access & bubble screen lock keep kids safely inside the app.
-* **Visual:** Bubble popping canvas with Guided Access active badge.
-
-### Slide 4 (Apple Watch Face Masks Remote)
-* **Headline:** Remote Face Tracking Masks
-* **Subhead:** Choose fun animal masks from your watch that track your toddler's smile!
-* **Visual:** Apple Watch Face Masks selector with toddler wearing lion mask on iPhone screen.
-
-### Slide 5 (Watch Complications & Easy Shutter)
-* **Headline:** Watch Complications & Instant Shutter
-* **Subhead:** Add shortcuts to your watch face for instant captures and giggle sounds.
-* **Visual:** Apple Watch complications on modular face and quick shutter view.

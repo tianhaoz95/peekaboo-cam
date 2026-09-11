@@ -10,6 +10,9 @@ public final class WatchSessionManager: NSObject, ObservableObject {
     @Published public var isReachable: Bool = false
     @Published public var isToddlerLocked: Bool = false
     @Published public var layoutMode: String = "Picture-in-Picture"
+    @Published public var captureMode: String = "Photo"
+    @Published public var isRecordingVideo: Bool = false
+    @Published public var videoDuration: TimeInterval = 0
     @Published public var activeFaceEmoji: String = "none"
     @Published public var lastPhotoThumbnail: UIImage?
     @Published public var lastPhotoTimestamp: Date?
@@ -79,6 +82,67 @@ public final class WatchSessionManager: NSObject, ObservableObject {
         sendMessage(["action": "swapCameras"])
     }
 
+    public func setCaptureMode(_ mode: String) {
+        WKInterfaceDevice.current().play(.click)
+        self.captureMode = mode
+        sendMessage(["action": "setCaptureMode", "mode": mode]) { [weak self] reply in
+            if let newMode = reply["mode"] as? String {
+                DispatchQueue.main.async {
+                    self?.captureMode = newMode
+                }
+            }
+        }
+    }
+
+    public func toggleCaptureMode() {
+        WKInterfaceDevice.current().play(.click)
+        let next = (captureMode == "Photo") ? "Video" : "Photo"
+        self.captureMode = next
+        sendMessage(["action": "toggleCaptureMode"]) { [weak self] reply in
+            if let newMode = reply["mode"] as? String {
+                DispatchQueue.main.async {
+                    self?.captureMode = newMode
+                }
+            }
+        }
+    }
+
+    public func startVideoRecording() {
+        WKInterfaceDevice.current().play(.start)
+        self.isRecordingVideo = true
+        sendMessage(["action": "startVideoRecording"]) { [weak self] reply in
+            if let recording = reply["isRecording"] as? Bool {
+                DispatchQueue.main.async {
+                    self?.isRecordingVideo = recording
+                    if recording {
+                        WKInterfaceDevice.current().play(.notification)
+                    }
+                }
+            }
+        }
+    }
+
+    public func stopVideoRecording() {
+        WKInterfaceDevice.current().play(.stop)
+        self.isRecordingVideo = false
+        sendMessage(["action": "stopVideoRecording"]) { [weak self] reply in
+            if let recording = reply["isRecording"] as? Bool {
+                DispatchQueue.main.async {
+                    self?.isRecordingVideo = recording
+                    WKInterfaceDevice.current().play(.success)
+                }
+            }
+        }
+    }
+
+    public func toggleVideoRecording() {
+        if isRecordingVideo {
+            stopVideoRecording()
+        } else {
+            startVideoRecording()
+        }
+    }
+
     public func toggleLayout() {
         WKInterfaceDevice.current().play(.click)
         sendMessage(["action": "toggleLayout"]) { [weak self] reply in
@@ -135,6 +199,15 @@ extension WatchSessionManager: WCSessionDelegate {
             }
             if let layout = applicationContext["layoutMode"] as? String {
                 self.layoutMode = layout
+            }
+            if let mode = applicationContext["captureMode"] as? String {
+                self.captureMode = mode
+            }
+            if let isRec = applicationContext["isRecordingVideo"] as? Bool {
+                self.isRecordingVideo = isRec
+            }
+            if let duration = applicationContext["videoRecordingDuration"] as? TimeInterval {
+                self.videoDuration = duration
             }
             if let emoji = applicationContext["activeFaceEmoji"] as? String {
                 self.activeFaceEmoji = emoji

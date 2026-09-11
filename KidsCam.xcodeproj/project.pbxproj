@@ -10,6 +10,7 @@
 		06D59D01FABBF9440FB24D9E /* SillySoundboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 944CF982CDD371490B52BE30 /* SillySoundboardView.swift */; };
 		0F99A9D7BD9E88B76C8F4B34 /* FaceTrackingEmojiOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 127CDB38D2716FD4E6FA4536 /* FaceTrackingEmojiOverlayView.swift */; };
 		1BE2C481F07BAFCC957D517C /* DualPhotoRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40BDCE52ED843B09CFE6B850 /* DualPhotoRenderer.swift */; };
+		A1B2C3D4E5F60001 /* DualVideoRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60002 /* DualVideoRecorder.swift */; };
 		23EB0A594B950757FFC263CE /* SoundEffectManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 885BF7738A033DC6F5155B59 /* SoundEffectManager.swift */; };
 		2766B1CBF946903BD2756298 /* KidsCamWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83961FBD0C064E672550C000 /* KidsCamWatchApp.swift */; };
 		3A015E1F5529E1B4726AF7EA /* pop.wav in Resources */ = {isa = PBXBuildFile; fileRef = C70CC044D2B4FAD8407A5DD9 /* pop.wav */; };
@@ -118,6 +119,7 @@
 		3CBFAD201449588459ECEFDF /* WatchFaceStudioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchFaceStudioView.swift; sourceTree = "<group>"; };
 		40ACD898D567E453474F787C /* front_video.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = front_video.mp4; sourceTree = "<group>"; };
 		40BDCE52ED843B09CFE6B850 /* DualPhotoRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DualPhotoRenderer.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60002 /* DualVideoRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DualVideoRecorder.swift; sourceTree = "<group>"; };
 		49D8280B1C25F9966D1442B3 /* ToddlerCameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToddlerCameraView.swift; sourceTree = "<group>"; };
 		4E05CDE08E1253BC82F0747C /* ToddlerControlBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToddlerControlBar.swift; sourceTree = "<group>"; };
 		59CDA1A81B2A018FBAAA73C5 /* quack.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = quack.wav; sourceTree = "<group>"; };
@@ -352,6 +354,7 @@
 				E89F84A9C3784393466695C4 /* DualCameraManager.swift */,
 				DB656FA5882BC918CF3B836B /* DualCameraPreviewView.swift */,
 				40BDCE52ED843B09CFE6B850 /* DualPhotoRenderer.swift */,
+				A1B2C3D4E5F60002 /* DualVideoRecorder.swift */,
 				D0B73E51D610A5E00A7D7C2F /* SimulatorCameraStreamer.swift */,
 			);
 			path = Camera;
@@ -526,6 +529,7 @@
 				71ECB2F9839D24FA6589DCBA /* DualCameraManager.swift in Sources */,
 				AB7E9B133C628492332709E0 /* DualCameraPreviewView.swift in Sources */,
 				1BE2C481F07BAFCC957D517C /* DualPhotoRenderer.swift in Sources */,
+				A1B2C3D4E5F60001 /* DualVideoRecorder.swift in Sources */,
 				418EE08D8F5DBAC15374DA13 /* FaceEmojiType.swift in Sources */,
 				0F99A9D7BD9E88B76C8F4B34 /* FaceTrackingEmojiOverlayView.swift in Sources */,
 				99E3DABAA808D71A8FF46FD5 /* FaceTrackingManager.swift in Sources */,

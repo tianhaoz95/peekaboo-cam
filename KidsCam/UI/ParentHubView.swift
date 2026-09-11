@@ -11,6 +11,12 @@ public struct ParentHubView: View {
     @State private var showWatchFaceSheet = false
     @State private var showGallerySheet = false
 
+    private var appVersionString: String {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.2.0"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "4"
+        return "\(version) (Build \(build))"
+    }
+
     public init() {}
 
     public var body: some View {
@@ -141,12 +147,17 @@ public struct ParentHubView: View {
                     }
                 }
 
-                // Section 5: App Info
+                // Section 5: Store Listing Screenshots Automation
+                Section(header: Text("Store Listing Screenshots"), footer: Text("Simulates a high-resolution baby in the primary feed and scenic nature park in the PiP for capturing App Store listing screenshots.")) {
+                    Toggle("Store Listing Mock Feeds", isOn: $cameraManager.isStoreListingMode)
+                }
+
+                // Section 6: App Info
                 Section(header: Text("About ToddlerCam")) {
                     HStack {
                         Text("Version")
                         Spacer()
-                        Text("1.0.0 (Build 1)")
+                        Text(appVersionString)
                             .foregroundColor(.secondary)
                     }
                     HStack {

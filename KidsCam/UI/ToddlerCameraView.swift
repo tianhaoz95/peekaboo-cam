@@ -12,6 +12,11 @@ public struct ToddlerCameraView: View {
     @State private var showParentHub = false
     @State private var showGallery = false
 
+    // Cheerful touch pops and touch sounds when tapping anywhere that is not a button
+    @State private var touchPops: [TouchBubble] = []
+    private let touchSounds: [SoundType] = [.quack, .woof, .meow, .giggle, .boing, .horn, .pop]
+    @State private var touchSoundIndex: Int = 0
+
     enum ParentDestination {
         case hub
         case guidedAccess
@@ -24,13 +29,25 @@ public struct ToddlerCameraView: View {
         GeometryReader { geo in
             ZStack {
                 // 1. Dual Camera Feeds (PiP) - Edge-to-Edge Fullscreen
-                DualCameraPreviewView()
-                    .ignoresSafeArea()
+                DualCameraPreviewView(onBackgroundTouch: { location in
+                    handleNonButtonTouch(at: location)
+                })
+                .ignoresSafeArea()
+
+                // Animated cheerful sparkles/pops when touching anywhere on screen
+                ForEach(touchPops) { pop in
+                    Text(pop.symbol)
+                        .font(.system(size: 40))
+                        .position(x: pop.x, y: pop.y)
+                        .transition(.scale.combined(with: .opacity))
+                        .allowsHitTesting(false)
+                }
 
                 // 2. Main Toddler Controls
                 VStack(spacing: 0) {
                     // Top Header Bar cleanly positioned below notch / Dynamic Island
                     topHeaderBar
+                        .padding(.horizontal, 16)
                         .padding(.top, max(geo.safeAreaInsets.top, 48) + 4)
 
                     Spacer()
@@ -42,10 +59,14 @@ public struct ToddlerCameraView: View {
                         },
                         onOpenParentZone: {
                             promptParentGate(for: .hub)
+                        },
+                        onBackgroundTouch: { _ in
+                            handleNonButtonTouch(at: CGPoint(x: geo.size.width / 2, y: geo.size.height - 70))
                         }
                     )
                     .padding(.bottom, max(geo.safeAreaInsets.bottom, 12))
                 }
+                .frame(width: geo.size.width, height: geo.size.height)
 
                 // 3. Toddler Lock Screen (Protects screen from unintentional taps)
                 if cameraManager.isToddlerLocked {
@@ -117,6 +138,28 @@ public struct ToddlerCameraView: View {
 
             Spacer()
 
+            // Video Recording Indicator Badge
+            if cameraManager.isRecordingVideo {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(Color.red)
+                        .frame(width: 8, height: 8)
+                    Text("REC \(formatDuration(cameraManager.videoRecordingDuration))")
+                        .font(.system(size: 12, weight: .bold, design: .monospaced))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.black.opacity(0.65))
+                .cornerRadius(14)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.red, lineWidth: 1.5)
+                )
+
+                Spacer()
+            }
+
             // Watch Connection Indicator
             if watchConn.isReachable {
                 HStack(spacing: 4) {
@@ -171,5 +214,30 @@ public struct ToddlerCameraView: View {
         case .gallery:
             showGallery = true
         }
+    }
+
+    // MARK: - Touch Anywhere Sound & Pops
+    private func handleNonButtonTouch(at location: CGPoint) {
+        guard !cameraManager.isToddlerLocked else { return }
+
+        let sound = touchSounds[touchSoundIndex % touchSounds.count]
+        touchSoundIndex += 1
+        SoundEffectManager.shared.play(sound, haptic: true)
+
+        let symbol = ["🫧", "⭐", "🎉", "🎈", "✨", "🐥", "🍭"].randomElement() ?? "⭐"
+        let color: Color = [.yellow, .pink, .green, .orange, .cyan, .purple].randomElement() ?? .yellow
+        let pop = TouchBubble(x: location.x, y: location.y, symbol: symbol, color: color)
+        touchPops.append(pop)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            touchPops.removeAll(where: { $0.id == pop.id })
+        }
+    }
+
+    private func formatDuration(_ seconds: TimeInterval) -> String {
+        let total = Int(seconds)
+        let mins = total / 60
+        let secs = total % 60
+        return String(format: "%02d:%02d", mins, secs)
     }
 }

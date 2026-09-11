@@ -19,6 +19,24 @@ public struct WatchRemoteControlView: View {
                     // Quick Action Grid
                     quickActionGrid
 
+                    // Camera & Layout Link
+                    NavigationLink(destination: WatchCameraControlsView()) {
+                        HStack {
+                            Image(systemName: "camera.badge.ellipsis")
+                                .foregroundColor(.cyan)
+                            Text("Camera & Layouts")
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            Spacer()
+                            Text(sessionManager.layoutMode == "Split" ? "Split" : "PiP")
+                                .font(.system(size: 10, weight: .regular, design: .rounded))
+                                .foregroundColor(.secondary)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 4)
+                    }
+
                     // Photo Review Link
                     NavigationLink(destination: WatchPhotoReviewView()) {
                         HStack {
@@ -107,36 +125,113 @@ public struct WatchRemoteControlView: View {
 
     // MARK: - Shutter Section
     private var shutterSection: some View {
-        Button(action: {
-            sessionManager.sendShutterCommand()
-        }) {
-            ZStack {
-                Circle()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(width: 78, height: 78)
+        VStack(spacing: 6) {
+            // Photo / Video Mode Selector
+            HStack(spacing: 4) {
+                Button(action: {
+                    sessionManager.setCaptureMode("Photo")
+                }) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 9, weight: .bold))
+                        Text("Photo")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(sessionManager.captureMode == "Photo" ? Color.yellow : Color.white.opacity(0.12))
+                    .foregroundColor(sessionManager.captureMode == "Photo" ? .black : .white)
+                    .cornerRadius(12)
+                }
+                .buttonStyle(PlainButtonStyle())
 
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color(red: 1.0, green: 0.35, blue: 0.38), Color(red: 1.0, green: 0.6, blue: 0.2)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 66, height: 66)
-
-                Image(systemName: "camera.fill")
-                    .font(.system(size: 28, weight: .bold))
+                Button(action: {
+                    sessionManager.setCaptureMode("Video")
+                }) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "video.fill")
+                            .font(.system(size: 9, weight: .bold))
+                        Text("Video")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(sessionManager.captureMode == "Video" ? Color.red : Color.white.opacity(0.12))
                     .foregroundColor(.white)
+                    .cornerRadius(12)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
-            .scaleEffect(isPressingShutter ? 0.9 : 1.0)
+
+            // Giant Shutter / Record Button
+            Button(action: {
+                if sessionManager.captureMode == "Video" {
+                    sessionManager.toggleVideoRecording()
+                } else {
+                    sessionManager.sendShutterCommand()
+                }
+            }) {
+                ZStack {
+                    if sessionManager.captureMode == "Video" {
+                        if sessionManager.isRecordingVideo {
+                            Circle()
+                                .stroke(Color.red, lineWidth: 4)
+                                .frame(width: 78, height: 78)
+
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.red)
+                                .frame(width: 30, height: 30)
+                        } else {
+                            Circle()
+                                .fill(Color.red.opacity(0.25))
+                                .frame(width: 78, height: 78)
+
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 66, height: 66)
+
+                            Image(systemName: "video.fill")
+                                .font(.system(size: 26, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    } else {
+                        Circle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 78, height: 78)
+
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(red: 1.0, green: 0.35, blue: 0.38), Color(red: 1.0, green: 0.6, blue: 0.2)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 66, height: 66)
+
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                }
+                .scaleEffect(isPressingShutter ? 0.9 : 1.0)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in isPressingShutter = true }
+                    .onEnded { _ in isPressingShutter = false }
+            )
+
+            if sessionManager.isRecordingVideo {
+                HStack(spacing: 4) {
+                    Circle().fill(Color.red).frame(width: 6, height: 6)
+                    Text("REC \(formatWatchDuration(sessionManager.videoDuration))")
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundColor(.red)
+                }
+            }
         }
-        .buttonStyle(PlainButtonStyle())
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in isPressingShutter = true }
-                .onEnded { _ in isPressingShutter = false }
-        )
     }
 
     // MARK: - Quick Action Grid
@@ -196,3 +291,178 @@ public struct WatchRemoteControlView: View {
         }
     }
 }
+
+// MARK: - Camera & Layout Controls View
+public struct WatchCameraControlsView: View {
+    @ObservedObject var sessionManager = WatchSessionManager.shared
+
+    public init() {}
+
+    public var body: some View {
+        ScrollView {
+            VStack(spacing: 12) {
+                // Section 1: Dual Layout Mode
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Dual Layout Mode")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundColor(.secondary)
+
+                    HStack(spacing: 8) {
+                        Button(action: {
+                            if sessionManager.layoutMode != "Picture-in-Picture" {
+                                sessionManager.toggleLayout()
+                            }
+                        }) {
+                            VStack(spacing: 4) {
+                                Image(systemName: "rectangle.inset.filled.and.cursorarrow")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(.purple)
+                                Text("PiP")
+                                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .background(sessionManager.layoutMode != "Split" ? Color.purple.opacity(0.35) : Color.white.opacity(0.1))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(sessionManager.layoutMode != "Split" ? Color.purple : Color.clear, lineWidth: 1.5)
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+
+                        Button(action: {
+                            if sessionManager.layoutMode != "Split" {
+                                sessionManager.toggleLayout()
+                            }
+                        }) {
+                            VStack(spacing: 4) {
+                                Image(systemName: "rectangle.split.2x1.fill")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(.blue)
+                                Text("Split")
+                                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .background(sessionManager.layoutMode == "Split" ? Color.blue.opacity(0.35) : Color.white.opacity(0.1))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(sessionManager.layoutMode == "Split" ? Color.blue : Color.clear, lineWidth: 1.5)
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+
+                // Section 2: Capture Mode (Photo / Video)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Capture Mode")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundColor(.secondary)
+
+                    HStack(spacing: 8) {
+                        Button(action: {
+                            sessionManager.setCaptureMode("Photo")
+                        }) {
+                            VStack(spacing: 4) {
+                                Image(systemName: "camera.fill")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.yellow)
+                                Text("Photo")
+                                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .background(sessionManager.captureMode == "Photo" ? Color.yellow.opacity(0.35) : Color.white.opacity(0.1))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(sessionManager.captureMode == "Photo" ? Color.yellow : Color.clear, lineWidth: 1.5)
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+
+                        Button(action: {
+                            sessionManager.setCaptureMode("Video")
+                        }) {
+                            VStack(spacing: 4) {
+                                Image(systemName: "video.fill")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.red)
+                                Text("Video")
+                                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .background(sessionManager.captureMode == "Video" ? Color.red.opacity(0.35) : Color.white.opacity(0.1))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(sessionManager.captureMode == "Video" ? Color.red : Color.clear, lineWidth: 1.5)
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+
+                // Section 3: Camera Swap
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Primary Angle")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundColor(.secondary)
+
+                    Button(action: {
+                        sessionManager.swapCameras()
+                    }) {
+                        HStack {
+                            Image(systemName: "arrow.triangle.2.circlepath.camera.fill")
+                                .foregroundColor(.cyan)
+                            Text("Swap Selfie & Scene")
+                                .font(.system(size: 11, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                            Spacer()
+                            Image(systemName: "repeat")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.cyan)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 9)
+                        .background(Color.cyan.opacity(0.2))
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.cyan.opacity(0.4), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+
+                // Dual Camera Live Indicator
+                HStack(spacing: 6) {
+                    Circle().fill(Color.green).frame(width: 6, height: 6)
+                    Text("Simultaneous Front + Rear Active")
+                        .font(.system(size: 9, weight: .semibold, design: .rounded))
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top, 2)
+            }
+            .padding(.horizontal, 8)
+            .padding(.bottom, 10)
+        }
+        .navigationTitle("Camera")
+    }
+}
+
+private func formatWatchDuration(_ seconds: TimeInterval) -> String {
+    let total = Int(seconds)
+    let mins = total / 60
+    let secs = total % 60
+    return String(format: "%02d:%02d", mins, secs)
+}
+

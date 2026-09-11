@@ -51,6 +51,9 @@ public final class WatchConnectivityManager: NSObject, ObservableObject {
         let context: [String: Any] = [
             "isToddlerLocked": DualCameraManager.shared.isToddlerLocked,
             "layoutMode": DualCameraManager.shared.layoutMode.rawValue,
+            "captureMode": DualCameraManager.shared.captureMode.rawValue,
+            "isRecordingVideo": DualCameraManager.shared.isRecordingVideo,
+            "videoRecordingDuration": DualCameraManager.shared.videoRecordingDuration,
             "primaryPosition": (DualCameraManager.shared.primaryPosition == .back) ? "back" : "front",
             "activeFaceEmoji": FaceTrackingManager.shared.activeFilter?.rawValue ?? "none",
             "timestamp": Date().timeIntervalSince1970
@@ -121,6 +124,30 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 DualCameraManager.shared.capturePhoto()
                 replyHandler(["status": "ok", "action": "shutter_fired"])
 
+            case "startVideoRecording":
+                DualCameraManager.shared.startVideoRecording()
+                replyHandler(["status": "ok", "isRecording": true])
+
+            case "stopVideoRecording":
+                DualCameraManager.shared.stopVideoRecording()
+                replyHandler(["status": "ok", "isRecording": false])
+
+            case "toggleVideoRecording":
+                DualCameraManager.shared.toggleVideoRecording()
+                replyHandler(["status": "ok", "isRecording": DualCameraManager.shared.isRecordingVideo])
+
+            case "setCaptureMode":
+                if let modeRaw = message["mode"] as? String, let mode = CameraCaptureMode(rawValue: modeRaw) {
+                    DualCameraManager.shared.setCaptureMode(mode)
+                    replyHandler(["status": "ok", "mode": mode.rawValue])
+                } else {
+                    replyHandler(["status": "error", "message": "Invalid capture mode"])
+                }
+
+            case "toggleCaptureMode":
+                DualCameraManager.shared.toggleCaptureMode()
+                replyHandler(["status": "ok", "mode": DualCameraManager.shared.captureMode.rawValue])
+
             case "playSound":
                 if let soundName = message["sound"] as? String,
                    let soundType = SoundType(rawValue: soundName) {
@@ -157,6 +184,9 @@ extension WatchConnectivityManager: WCSessionDelegate {
                     "status": "ok",
                     "isToddlerLocked": DualCameraManager.shared.isToddlerLocked,
                     "layoutMode": DualCameraManager.shared.layoutMode.rawValue,
+                    "captureMode": DualCameraManager.shared.captureMode.rawValue,
+                    "isRecordingVideo": DualCameraManager.shared.isRecordingVideo,
+                    "videoRecordingDuration": DualCameraManager.shared.videoRecordingDuration,
                     "isMultiCamSupported": DualCameraManager.shared.isMultiCamSupported,
                     "activeFaceEmoji": FaceTrackingManager.shared.activeFilter?.rawValue ?? "none"
                 ])

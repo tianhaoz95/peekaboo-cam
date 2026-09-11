@@ -11,12 +11,12 @@ public final class FaceTrackingManager: ObservableObject {
     // MARK: - Published State
     @Published public var activeFilter: FaceEmojiType? = nil
     @Published public var isFaceDetected: Bool = false
-    @Published public var normalizedFaceRect: CGRect = CGRect(x: 0.25, y: 0.15, width: 0.5, height: 0.5)
+    @Published public var normalizedFaceRect: CGRect = CGRect(x: 0.275, y: 0.30, width: 0.45, height: 0.42)
     @Published public var eyesCenterNormalized: CGPoint? = nil
     @Published public var foreheadCenterNormalized: CGPoint? = nil
     @Published public var headRoll: Double = 0.0 // Head tilt in radians
     @Published public var headYaw: Double = 0.0  // Face turn in radians
-    @Published public var lastImageSize: CGSize = CGSize(width: 1280, height: 720)
+    @Published public var lastImageSize: CGSize = CGSize(width: 800, height: 1000)
 
     private let visionQueue = DispatchQueue(label: "com.hejitech.kidscam.visionQueue", qos: .userInteractive)
     private var isProcessingFrame = false
@@ -47,6 +47,17 @@ public final class FaceTrackingManager: ObservableObject {
                 self.isFaceDetected = false
             }
         }
+    }
+
+    // MARK: - Store Listing / Mock Face Detection
+    public func mockBabyFaceDetection() {
+        self.isFaceDetected = true
+        self.normalizedFaceRect = CGRect(x: 0.24, y: 0.20, width: 0.52, height: 0.45)
+        self.eyesCenterNormalized = CGPoint(x: 0.50, y: 0.38)
+        self.foreheadCenterNormalized = CGPoint(x: 0.50, y: 0.22)
+        self.headRoll = 0.0
+        self.headYaw = 0.0
+        self.lastImageSize = CGSize(width: 800, height: 1200)
     }
 
     // MARK: - Frame Processing (CMSampleBuffer)
@@ -246,6 +257,88 @@ public final class FaceTrackingManager: ObservableObject {
     }
 
     // MARK: - Exact Aspect-Fill UI Coordinate Conversion
+    public func projectNormalizedPoint(
+        _ rawPt: CGPoint,
+        in containerSize: CGSize,
+        imageSize: CGSize? = nil
+    ) -> CGPoint {
+        guard containerSize.width > 0 && containerSize.height > 0 else { return .zero }
+        let frame = imageSize ?? lastImageSize
+        guard frame.width > 0 && frame.height > 0 else {
+            return CGPoint(x: rawPt.x * containerSize.width, y: rawPt.y * containerSize.height)
+        }
+
+        // Exact Aspect-Fill projection from camera pixel coordinates to container view bounds
+        let imgAspect = frame.width / frame.height
+        let boxAspect = containerSize.width / containerSize.height
+
+        if imgAspect > boxAspect {
+            let scale = containerSize.height / frame.height
+            let renderedWidth = frame.width * scale
+            let xOffset = (containerSize.width - renderedWidth) / 2.0
+            return CGPoint(x: xOffset + (rawPt.x * renderedWidth), y: rawPt.y * containerSize.height)
+        } else {
+            let scale = containerSize.width / frame.width
+            let renderedHeight = frame.height * scale
+            let yOffset = (containerSize.height - renderedHeight) / 2.0
+            return CGPoint(x: rawPt.x * containerSize.width, y: yOffset + (rawPt.y * renderedHeight))
+        }
+    }
+
+    public func faceCenter(
+        in containerSize: CGSize,
+        imageSize: CGSize? = nil
+    ) -> CGPoint {
+        let rawCenter = CGPoint(x: normalizedFaceRect.midX, y: normalizedFaceRect.midY)
+        return projectNormalizedPoint(rawCenter, in: containerSize, imageSize: imageSize)
+    }
+
+    public func faceDimensions(
+        in containerSize: CGSize,
+        imageSize: CGSize? = nil
+    ) -> CGSize {
+        let frame = imageSize ?? lastImageSize
+        let renderScale: CGFloat
+        if frame.width > 0 && frame.height > 0 {
+            renderScale = max(containerSize.width / frame.width, containerSize.height / frame.height)
+        } else {
+            renderScale = containerSize.width / 400.0
+        }
+
+        let w = (normalizedFaceRect.size.width * (frame.width > 0 ? frame.width : containerSize.width)) * renderScale
+        let h = (normalizedFaceRect.size.height * (frame.height > 0 ? frame.height : containerSize.height)) * renderScale
+        return CGSize(width: max(w, 80), height: max(h, 100))
+    }
+
+    public func flyingEmojiPosition(
+        angle: Double,
+        in containerSize: CGSize,
+        imageSize: CGSize? = nil
+    ) -> CGPoint {
+        let center = faceCenter(in: containerSize, imageSize: imageSize)
+        let dims = faceDimensions(in: containerSize, imageSize: imageSize)
+
+        // Orbit radius: strictly outside the face perimeter so the face is never covered
+        let baseRadiusX = dims.width * 0.70 + 20
+        let baseRadiusY = dims.height * 0.72 + 25
+
+        // Gentle flutter for natural flying motion
+        let flutter = sin(angle * 3.0) * 8.0
+        let rx = baseRadiusX + flutter
+        let ry = baseRadiusY + flutter * 0.8
+
+        let unrotatedX = rx * cos(angle)
+        let unrotatedY = ry * sin(angle)
+
+        // Rotate orbit along with head roll
+        let cosRoll = cos(headRoll)
+        let sinRoll = sin(headRoll)
+        let rotX = unrotatedX * cosRoll - unrotatedY * sinRoll
+        let rotY = unrotatedX * sinRoll + unrotatedY * cosRoll
+
+        return CGPoint(x: center.x + rotX, y: center.y + rotY)
+    }
+
     public func anchorPoint(
         for anchor: FaceAnchorPosition,
         in containerSize: CGSize,
@@ -264,28 +357,7 @@ public final class FaceTrackingManager: ObservableObject {
             rawPt = CGPoint(x: rect.midX, y: rect.origin.y + rect.size.height * 0.45)
         }
 
-        let frame = imageSize ?? lastImageSize
-        guard frame.width > 0 && frame.height > 0 else {
-            return CGPoint(x: rawPt.x * containerSize.width, y: rawPt.y * containerSize.height)
-        }
-
-        // Exact Aspect-Fill projection from camera pixel coordinates to container view bounds
-        let imgAspect = frame.width / frame.height
-        let boxAspect = containerSize.width / containerSize.height
-
-        if imgAspect > boxAspect {
-            // Image is wider than container: container height matches, width cropped on sides
-            let scale = containerSize.height / frame.height
-            let renderedWidth = frame.width * scale
-            let xOffset = (containerSize.width - renderedWidth) / 2.0
-            return CGPoint(x: xOffset + (rawPt.x * renderedWidth), y: rawPt.y * containerSize.height)
-        } else {
-            // Image is taller than container: container width matches, height cropped top/bottom
-            let scale = containerSize.width / frame.width
-            let renderedHeight = frame.height * scale
-            let yOffset = (containerSize.height - renderedHeight) / 2.0
-            return CGPoint(x: rawPt.x * containerSize.width, y: yOffset + (rawPt.y * renderedHeight))
-        }
+        return projectNormalizedPoint(rawPt, in: containerSize, imageSize: imageSize)
     }
 
     public func emojiSize(
@@ -303,13 +375,7 @@ public final class FaceTrackingManager: ObservableObject {
 
         let actualFaceWidth = (normalizedFaceRect.size.width * (frame.width > 0 ? frame.width : containerSize.width)) * renderScale
 
-        switch filter.anchorPosition {
-        case .forehead:
-            return max(actualFaceWidth * 0.92, 58)
-        case .eyes:
-            return max(actualFaceWidth * 0.88, 50)
-        case .head:
-            return max(actualFaceWidth * 1.18, 75)
-        }
+        // Companion emoji flying around face (scaled nicely, never covering the face)
+        return max(min(actualFaceWidth * 0.40, 72), 44)
     }
 }
