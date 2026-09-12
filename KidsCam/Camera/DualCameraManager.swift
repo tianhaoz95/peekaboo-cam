@@ -259,7 +259,10 @@ public final class DualCameraManager: NSObject, ObservableObject {
                     if session.canAddConnection(conn) {
                         session.addConnection(conn)
                         conn.videoOrientation = .portrait
-                        conn.isVideoMirrored = true
+                        if conn.isVideoMirroringSupported {
+                            conn.automaticallyAdjustsVideoMirroring = false
+                            conn.isVideoMirrored = true
+                        }
                         self.frontPreviewLayer = layer
                     }
 
@@ -270,7 +273,10 @@ public final class DualCameraManager: NSObject, ObservableObject {
                         if session.canAddConnection(pConn) {
                             session.addConnection(pConn)
                             pConn.videoOrientation = .portrait
-                            pConn.isVideoMirrored = true
+                            if pConn.isVideoMirroringSupported {
+                                pConn.automaticallyAdjustsVideoMirroring = false
+                                pConn.isVideoMirrored = true
+                            }
                             self.frontPhotoOutput = photoOut
                         }
                     }
@@ -285,7 +291,10 @@ public final class DualCameraManager: NSObject, ObservableObject {
                         if session.canAddConnection(vConn) {
                             session.addConnection(vConn)
                             vConn.videoOrientation = .portrait
-                            vConn.isVideoMirrored = true
+                            if vConn.isVideoMirroringSupported {
+                                vConn.automaticallyAdjustsVideoMirroring = false
+                                vConn.isVideoMirrored = true
+                            }
                             self.frontVideoOutput = videoOut
                         }
                     }
