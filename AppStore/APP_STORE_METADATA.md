@@ -87,9 +87,9 @@ Turn photography and home videos into a joyful interactive adventure with simult
 ---
 
 ## 3. URLs
-* **Support URL:** `https://hejitech.com/support/kidscam`
-* **Marketing URL:** `https://hejitech.com/toddlercam`
-* **Privacy Policy URL:** `https://hejitech.com/privacy/kidscam`
+* **Support URL:** `https://tianhaoz95.github.io/peekaboo-cam/support.html`
+* **Marketing URL:** `https://tianhaoz95.github.io/peekaboo-cam/`
+* **Privacy Policy URL:** `https://tianhaoz95.github.io/peekaboo-cam/privacy.html`
 
 ---
 
