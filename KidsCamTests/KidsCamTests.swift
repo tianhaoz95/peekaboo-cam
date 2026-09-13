@@ -8,13 +8,13 @@ final class KidsCamTests: XCTestCase {
         super.setUp()
         GuidedAccessManager.shared.isGuidedAccessActive = false
         DualCameraManager.shared.isToddlerLocked = false
-        DualCameraManager.shared.isStoreListingMode = false
+        DualCameraManager.shared.isDemoMode = false
     }
 
     override func tearDown() {
         GuidedAccessManager.shared.isGuidedAccessActive = false
         DualCameraManager.shared.isToddlerLocked = false
-        DualCameraManager.shared.isStoreListingMode = false
+        DualCameraManager.shared.isDemoMode = false
         super.tearDown()
     }
 
@@ -268,13 +268,13 @@ final class KidsCamTests: XCTestCase {
         }
     }
 
-    // MARK: - Store Listing Screenshot Automation Mode Tests
-    func testStoreListingModeActivation() {
+    // MARK: - Demo Mode (Screenshot Automation) Tests
+    func testDemoModeActivation() {
         let camera = DualCameraManager.shared
-        camera.isStoreListingMode = true
-        XCTAssertTrue(camera.isStoreListingMode)
-        XCTAssertNotNil(camera.storeListingBabyFrame)
-        XCTAssertNotNil(camera.storeListingNatureFrame)
+        camera.isDemoMode = true
+        XCTAssertTrue(camera.isDemoMode)
+        XCTAssertNotNil(camera.demoBabyFrame)
+        XCTAssertNotNil(camera.demoNatureFrame)
         XCTAssertTrue(FaceTrackingManager.shared.isFaceDetected)
 
         let baby = DualPhotoRenderer.renderBabyMockImage()
@@ -285,17 +285,17 @@ final class KidsCamTests: XCTestCase {
         XCTAssertEqual(nature.size.height, 1200)
 
         camera.swapCameras()
-        XCTAssertFalse(camera.storeListingBabyIsPrimary)
+        XCTAssertFalse(camera.demoBabyIsPrimary)
         camera.swapCameras()
-        XCTAssertTrue(camera.storeListingBabyIsPrimary)
+        XCTAssertTrue(camera.demoBabyIsPrimary)
     }
 
     // MARK: - App Store Screenshots Generator
     @MainActor
     func testGenerateAllAppStoreScreenshots() {
         let camera = DualCameraManager.shared
-        camera.isStoreListingMode = true
-        camera.storeListingBabyIsPrimary = true
+        camera.isDemoMode = true
+        camera.demoBabyIsPrimary = true
         camera.permissionStatus = .authorized
         camera.hasPhysicalCameras = false
         camera.isToddlerLocked = false
@@ -306,8 +306,8 @@ final class KidsCamTests: XCTestCase {
         FaceTrackingManager.shared.setActiveFilter(.lion)
         FaceTrackingManager.shared.mockBabyFaceDetection()
 
-        let babyImg = camera.storeListingBabyFrame ?? DualPhotoRenderer.renderBabyMockImage()
-        let natureImg = camera.storeListingNatureFrame ?? DualPhotoRenderer.renderNatureParkMockImage()
+        let babyImg = camera.demoBabyFrame ?? DualPhotoRenderer.renderBabyMockImage()
+        let natureImg = camera.demoNatureFrame ?? DualPhotoRenderer.renderNatureParkMockImage()
 
         let sampleComposite = DualPhotoRenderer.composeDualPhoto(
             backImage: natureImg,
@@ -323,7 +323,7 @@ final class KidsCamTests: XCTestCase {
         )
 
         // 1. appstore_iphone_fullscreen_pip.png (1320 x 2868) - Baby Large, Nature PiP, Flying Lion
-        camera.storeListingBabyIsPrimary = true
+        camera.demoBabyIsPrimary = true
         FaceTrackingManager.shared.setActiveFilter(.lion)
         FaceTrackingManager.shared.mockBabyFaceDetection()
         saveIPhoneScreenshot(view: ToddlerCameraView(), filename: "appstore_iphone_fullscreen_pip.png")
@@ -411,7 +411,7 @@ final class KidsCamTests: XCTestCase {
 
         // Reset state
         GuidedAccessManager.shared.isGuidedAccessActive = false
-        camera.isStoreListingMode = false
+        camera.isDemoMode = false
         camera.isToddlerLocked = false
     }
 

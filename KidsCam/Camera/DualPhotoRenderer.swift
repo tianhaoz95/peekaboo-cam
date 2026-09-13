@@ -302,7 +302,7 @@ public final class DualPhotoRenderer {
         }
     }
 
-    // MARK: - Store Listing Mock Feeds (Baby & Nature / Amusement Park)
+    // MARK: - Demo Mode Feeds (Baby & Nature / Amusement Park)
 
     /// Renders a cheerful, high-resolution portrait illustration of a baby for store listing screenshots
     public static func renderBabyMockImage(size: CGSize = CGSize(width: 800, height: 1200)) -> UIImage {

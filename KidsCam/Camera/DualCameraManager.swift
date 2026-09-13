@@ -80,17 +80,17 @@ public final class DualCameraManager: NSObject, ObservableObject {
     @Published public var simulatedRearFrame: UIImage?
     private var cancellables = Set<AnyCancellable>()
 
-    // Store Listing Screenshot Automation Mode
-    @Published public var isStoreListingMode: Bool = false {
+    // Demo Mode (Screenshot Automation)
+    @Published public var isDemoMode: Bool = false {
         didSet {
-            if isStoreListingMode {
-                updateStoreListingFrames()
+            if isDemoMode {
+                updateDemoFrames()
             }
         }
     }
-    @Published public var storeListingBabyIsPrimary: Bool = true
-    @Published public var storeListingBabyFrame: UIImage?
-    @Published public var storeListingNatureFrame: UIImage?
+    @Published public var demoBabyIsPrimary: Bool = true
+    @Published public var demoBabyFrame: UIImage?
+    @Published public var demoNatureFrame: UIImage?
 
     private var backPhotoOutput: AVCapturePhotoOutput?
     private var frontPhotoOutput: AVCapturePhotoOutput?
@@ -101,9 +101,9 @@ public final class DualCameraManager: NSObject, ObservableObject {
 
     public override init() {
         super.init()
-        let isStoreArg = CommandLine.arguments.contains("-storeListingMode") || ProcessInfo.processInfo.environment["STORE_LISTING_MODE"] == "1"
-        if isStoreArg {
-            self.isStoreListingMode = true
+        let isDemoModeArg = CommandLine.arguments.contains("-demoMode") || ProcessInfo.processInfo.environment["DEMO_MODE"] == "1"
+        if isDemoModeArg {
+            self.isDemoMode = true
         }
         setupVideoLoopers()
         startVideoPlayback()
@@ -111,12 +111,12 @@ public final class DualCameraManager: NSObject, ObservableObject {
         checkAndRequestCameraPermission()
     }
 
-    public func updateStoreListingFrames() {
+    public func updateDemoFrames() {
         let baby = DualPhotoRenderer.renderBabyMockImage()
         let nature = DualPhotoRenderer.renderNatureParkMockImage()
-        self.storeListingBabyFrame = baby
-        self.storeListingNatureFrame = nature
-        self.storeListingBabyIsPrimary = true
+        self.demoBabyFrame = baby
+        self.demoNatureFrame = nature
+        self.demoBabyIsPrimary = true
         FaceTrackingManager.shared.mockBabyFaceDetection()
     }
 
@@ -387,8 +387,8 @@ public final class DualCameraManager: NSObject, ObservableObject {
 
     public func swapCameras() {
         SoundEffectManager.shared.play(.pop)
-        if isStoreListingMode {
-            storeListingBabyIsPrimary.toggle()
+        if isDemoMode {
+            demoBabyIsPrimary.toggle()
         }
         primaryPosition = (primaryPosition == .back) ? .front : .back
     }
@@ -403,9 +403,9 @@ public final class DualCameraManager: NSObject, ObservableObject {
     }
 
     public func getCurrentFrames() -> (back: UIImage, front: UIImage) {
-        if isStoreListingMode {
-            let babyImg = storeListingBabyFrame ?? DualPhotoRenderer.renderBabyMockImage()
-            let natureImg = storeListingNatureFrame ?? DualPhotoRenderer.renderNatureParkMockImage()
+        if isDemoMode {
+            let babyImg = demoBabyFrame ?? DualPhotoRenderer.renderBabyMockImage()
+            let natureImg = demoNatureFrame ?? DualPhotoRenderer.renderNatureParkMockImage()
             return (back: natureImg, front: babyImg)
         } else {
             let backImg = simulatedRearFrame ?? captureCurrentVideoFrame(from: "rear_video") ?? DualPhotoRenderer.renderSimulatedBackCamera()
@@ -491,8 +491,8 @@ public final class DualCameraManager: NSObject, ObservableObject {
             self.showFlashAnimation = false
         }
 
-        if isStoreListingMode {
-            captureFromStoreListingMode()
+        if isDemoMode {
+            captureFromDemoMode()
         } else if hasPhysicalCameras, isMultiCamSupported, let backOut = backPhotoOutput, let frontOut = frontPhotoOutput {
             let backSettings = AVCapturePhotoSettings()
             let frontSettings = AVCapturePhotoSettings()
@@ -505,17 +505,17 @@ public final class DualCameraManager: NSObject, ObservableObject {
         }
     }
 
-    private func captureFromStoreListingMode() {
+    private func captureFromDemoMode() {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
 
-            let babyImg = self.storeListingBabyFrame ?? DualPhotoRenderer.renderBabyMockImage()
-            let natureImg = self.storeListingNatureFrame ?? DualPhotoRenderer.renderNatureParkMockImage()
+            let babyImg = self.demoBabyFrame ?? DualPhotoRenderer.renderBabyMockImage()
+            let natureImg = self.demoNatureFrame ?? DualPhotoRenderer.renderNatureParkMockImage()
 
             let composite = DualPhotoRenderer.composeDualPhoto(
                 backImage: natureImg,
                 frontImage: babyImg,
-                primaryPosition: self.storeListingBabyIsPrimary ? .front : .back,
+                primaryPosition: self.demoBabyIsPrimary ? .front : .back,
                 filter: FaceTrackingManager.shared.activeFilter
             )
 

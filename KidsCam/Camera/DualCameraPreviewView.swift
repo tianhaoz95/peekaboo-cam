@@ -131,17 +131,17 @@ public struct DualCameraPreviewView: View {
         .frame(width: screenSize.width, height: screenSize.height)
     }
 
-    // MARK: - Camera Feed (Store Listing Mock, Physical Hardware, or Simulator Stream)
+    // MARK: - Camera Feed (Demo Mode, Physical Hardware, or Simulator Stream)
     @ViewBuilder
     private func cameraFeed(position: ActiveCameraPosition, isPrimary: Bool, targetSize: CGSize) -> some View {
-        let isBaby = cameraManager.isStoreListingMode ? (isPrimary == cameraManager.storeListingBabyIsPrimary) : (position == .front)
+        let isBaby = cameraManager.isDemoMode ? (isPrimary == cameraManager.demoBabyIsPrimary) : (position == .front)
 
         ZStack {
-            if cameraManager.isStoreListingMode {
+            if cameraManager.isDemoMode {
                 if isBaby {
-                    storeListingBabyFeed(targetSize: targetSize)
+                    demoBabyFeed(targetSize: targetSize)
                 } else {
-                    storeListingNatureFeed(targetSize: targetSize)
+                    demoNatureFeed(targetSize: targetSize)
                 }
             } else if cameraManager.hasPhysicalCameras {
                 if position == .back, let layer = cameraManager.backPreviewLayer {
@@ -167,8 +167,8 @@ public struct DualCameraPreviewView: View {
     }
 
     @ViewBuilder
-    private func storeListingBabyFeed(targetSize: CGSize) -> some View {
-        let img = cameraManager.storeListingBabyFrame ?? DualPhotoRenderer.renderBabyMockImage()
+    private func demoBabyFeed(targetSize: CGSize) -> some View {
+        let img = cameraManager.demoBabyFrame ?? DualPhotoRenderer.renderBabyMockImage()
         Image(uiImage: img)
             .resizable()
             .aspectRatio(contentMode: .fill)
@@ -177,8 +177,8 @@ public struct DualCameraPreviewView: View {
     }
 
     @ViewBuilder
-    private func storeListingNatureFeed(targetSize: CGSize) -> some View {
-        let img = cameraManager.storeListingNatureFrame ?? DualPhotoRenderer.renderNatureParkMockImage()
+    private func demoNatureFeed(targetSize: CGSize) -> some View {
+        let img = cameraManager.demoNatureFrame ?? DualPhotoRenderer.renderNatureParkMockImage()
         Image(uiImage: img)
             .resizable()
             .aspectRatio(contentMode: .fill)

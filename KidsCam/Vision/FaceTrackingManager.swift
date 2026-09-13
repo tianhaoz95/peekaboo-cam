@@ -49,7 +49,7 @@ public final class FaceTrackingManager: ObservableObject {
         }
     }
 
-    // MARK: - Store Listing / Mock Face Detection
+    // MARK: - Demo Mode / Mock Face Detection
     public func mockBabyFaceDetection() {
         self.isFaceDetected = true
         self.normalizedFaceRect = CGRect(x: 0.24, y: 0.20, width: 0.52, height: 0.45)

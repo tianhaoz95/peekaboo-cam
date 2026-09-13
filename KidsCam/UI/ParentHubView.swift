@@ -147,9 +147,9 @@ public struct ParentHubView: View {
                     }
                 }
 
-                // Section 5: Store Listing Screenshots Automation
-                Section(header: Text("Store Listing Screenshots"), footer: Text("Simulates a high-resolution baby in the primary feed and scenic nature park in the PiP for capturing App Store listing screenshots.")) {
-                    Toggle("Store Listing Mock Feeds", isOn: $cameraManager.isStoreListingMode)
+                // Section 5: Demo Mode
+                Section(header: Text("Demo Mode"), footer: Text("Simulates a high-resolution baby in the primary feed and scenic nature park in the PiP for capturing App Store listing screenshots.")) {
+                    Toggle("Demo Mode", isOn: $cameraManager.isDemoMode)
                 }
 
                 // Section 6: App Info

@@ -123,8 +123,8 @@ public final class DualVideoRecorder: NSObject {
             }
 
             let frames = DualCameraManager.shared.getCurrentFrames()
-            let primaryPos = DualCameraManager.shared.isStoreListingMode
-                ? (DualCameraManager.shared.storeListingBabyIsPrimary ? .front : .back)
+            let primaryPos = DualCameraManager.shared.isDemoMode
+                ? (DualCameraManager.shared.demoBabyIsPrimary ? .front : .back)
                 : DualCameraManager.shared.primaryPosition
 
             let composite = DualPhotoRenderer.composeDualPhoto(
