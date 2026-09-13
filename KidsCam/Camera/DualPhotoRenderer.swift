@@ -7,7 +7,6 @@ public final class DualPhotoRenderer {
     public static func composeDualPhoto(
         backImage: UIImage,
         frontImage: UIImage,
-        layout: CameraLayoutMode,
         primaryPosition: ActiveCameraPosition,
         filter: FaceEmojiType? = FaceTrackingManager.shared.activeFilter,
         sticker: String? = nil
@@ -27,55 +26,32 @@ public final class DualPhotoRenderer {
             let pipHeight: CGFloat = pipWidth * (4.0 / 3.0)
             let pipRect = CGRect(x: size.width - pipWidth - 36, y: 50, width: pipWidth, height: pipHeight)
 
-            if layout == .split {
-                // Split 50/50 Layout - Top / Bottom with zero stretching
-                let halfHeight = size.height * 0.5
-                let topRect = CGRect(x: 0, y: 0, width: size.width, height: halfHeight - 4)
-                let bottomRect = CGRect(x: 0, y: halfHeight + 4, width: size.width, height: halfHeight - 4)
+            // Picture-in-Picture (PiP) Layout with zero stretching
+            // 1. Draw main full image using Aspect Fill
+            drawImageAspectFill(mainImage, in: CGRect(origin: .zero, size: size), context: cg)
 
-                drawImageAspectFill(mainImage, in: topRect, context: cg)
-                drawImageAspectFill(pipImage, in: bottomRect, context: cg)
+            // 2. Draw PiP overlay in top right using Aspect Fill
+            // Shadow & rounded border
+            cg.saveGState()
+            cg.setShadow(offset: CGSize(width: 0, height: 8), blur: 16, color: UIColor.black.withAlphaComponent(0.35).cgColor)
+            let clipPath = UIBezierPath(roundedRect: pipRect, cornerRadius: 28)
+            UIColor.white.setStroke()
+            clipPath.lineWidth = 10
+            clipPath.stroke()
+            clipPath.addClip()
+            drawImageAspectFill(pipImage, in: pipRect, context: cg)
+            cg.restoreGState()
 
-                // Sleek golden divider bar
-                let dividerRect = CGRect(x: 0, y: halfHeight - 4, width: size.width, height: 8)
-                UIColor(red: 1.0, green: 0.85, blue: 0.3, alpha: 1.0).setFill()
-                cg.fill(dividerRect)
-            } else {
-                // Picture-in-Picture (PiP) Layout with zero stretching
-                // 1. Draw main full image using Aspect Fill
-                drawImageAspectFill(mainImage, in: CGRect(origin: .zero, size: size), context: cg)
-
-                // 2. Draw PiP overlay in top right using Aspect Fill
-                // Shadow & rounded border
-                cg.saveGState()
-                cg.setShadow(offset: CGSize(width: 0, height: 8), blur: 16, color: UIColor.black.withAlphaComponent(0.35).cgColor)
-                let clipPath = UIBezierPath(roundedRect: pipRect, cornerRadius: 28)
-                UIColor.white.setStroke()
-                clipPath.lineWidth = 10
-                clipPath.stroke()
-                clipPath.addClip()
-                drawImageAspectFill(pipImage, in: pipRect, context: cg)
-                cg.restoreGState()
-
-                // Border outline
-                let borderPath = UIBezierPath(roundedRect: pipRect, cornerRadius: 28)
-                UIColor(red: 1.0, green: 0.85, blue: 0.3, alpha: 1.0).setStroke()
-                borderPath.lineWidth = 6
-                borderPath.stroke()
-            }
+            // Border outline
+            let borderPath = UIBezierPath(roundedRect: pipRect, cornerRadius: 28)
+            UIColor(red: 1.0, green: 0.85, blue: 0.3, alpha: 1.0).setStroke()
+            borderPath.lineWidth = 6
+            borderPath.stroke()
 
             // Draw Vision-tracked face emoji flying around face if active
             if let active = filter {
                 let isFrontPrimary = (primaryPosition == .front)
-                let targetRect: CGRect
-                if layout == .split {
-                    let halfHeight = size.height * 0.5
-                    targetRect = isFrontPrimary
-                        ? CGRect(x: 0, y: 0, width: size.width, height: halfHeight - 4)
-                        : CGRect(x: 0, y: halfHeight + 4, width: size.width, height: halfHeight - 4)
-                } else {
-                    targetRect = isFrontPrimary ? CGRect(origin: .zero, size: size) : pipRect
-                }
+                let targetRect: CGRect = isFrontPrimary ? CGRect(origin: .zero, size: size) : pipRect
                 let time = Date().timeIntervalSinceReferenceDate
                 let period: Double = 3.6
                 let angle = (time.truncatingRemainder(dividingBy: period)) / period * (2.0 * .pi)

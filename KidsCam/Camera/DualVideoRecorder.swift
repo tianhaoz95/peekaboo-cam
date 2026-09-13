@@ -130,7 +130,6 @@ public final class DualVideoRecorder: NSObject {
             let composite = DualPhotoRenderer.composeDualPhoto(
                 backImage: frames.back,
                 frontImage: frames.front,
-                layout: DualCameraManager.shared.layoutMode,
                 primaryPosition: primaryPos,
                 filter: FaceTrackingManager.shared.activeFilter
             )

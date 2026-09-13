@@ -44,7 +44,7 @@ Turn photography and home videos into a joyful interactive adventure with simult
 
 🎥 DUAL CAMERA VIDEO RECORDING (New!)
 • Capture living memories with simultaneous front and rear video recording!
-• Full edge-to-edge PiP and split-screen video recording with 30fps smooth performance.
+• Full edge-to-edge Picture-in-Picture video recording with 30fps smooth performance.
 • Start and stop recording either on iPhone or remotely from your Apple Watch.
 
 📸 DUAL CAMERA PHOTO CAPTURE
@@ -168,7 +168,7 @@ Contact Email: review-contact@hejitech.com
 3. **`watch_paired_live.png`**: Apple Vision Face Masks (Remote selector with live tracking status and active mask highlight).
 4. **`live_watch_remote.png`**: Silly Soundboard (Quack, Puppy, Kitty, Giggle, Boing, Horn attention grabbers).
 5. **`watch_toddler_lock.png`**: Remote Toddler Screen Lock (Shows active childproof lock banner, safe touch canvas indicator, and active remote shutter).
-6. **`watch_camera_controls.png`**: Camera Angle & Dual Layout Controls (Switch PiP vs Split screen and swap front/rear angles remotely).
+6. **`watch_camera_controls.png`**: Camera Angle Controls (Swap front/rear primary angle remotely).
 7. **`watch_complications.png`**: Watch Face Complications (Modular Apple Watch Face with 1-tap SNAP button, status widget, and shortcuts).
 8. **`watch_shutter_action.png`**: Rapid Shutter Action & Haptic Feedback (Wrist snap feedback pulse and instant phone save confirmation).
 

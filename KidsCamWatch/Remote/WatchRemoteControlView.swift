@@ -19,15 +19,15 @@ public struct WatchRemoteControlView: View {
                     // Quick Action Grid
                     quickActionGrid
 
-                    // Camera & Layout Link
+                    // Camera Controls Link
                     NavigationLink(destination: WatchCameraControlsView()) {
                         HStack {
                             Image(systemName: "camera.badge.ellipsis")
                                 .foregroundColor(.cyan)
-                            Text("Camera & Layouts")
+                            Text("Camera Controls")
                                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                             Spacer()
-                            Text(sessionManager.layoutMode == "Split" ? "Split" : "PiP")
+                            Text(sessionManager.captureMode)
                                 .font(.system(size: 10, weight: .regular, design: .rounded))
                                 .foregroundColor(.secondary)
                             Image(systemName: "chevron.right")
@@ -301,64 +301,7 @@ public struct WatchCameraControlsView: View {
     public var body: some View {
         ScrollView {
             VStack(spacing: 12) {
-                // Section 1: Dual Layout Mode
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Dual Layout Mode")
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundColor(.secondary)
-
-                    HStack(spacing: 8) {
-                        Button(action: {
-                            if sessionManager.layoutMode != "Picture-in-Picture" {
-                                sessionManager.toggleLayout()
-                            }
-                        }) {
-                            VStack(spacing: 4) {
-                                Image(systemName: "rectangle.inset.filled.and.cursorarrow")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.purple)
-                                Text("PiP")
-                                    .font(.system(size: 10, weight: .bold, design: .rounded))
-                                    .foregroundColor(.white)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(sessionManager.layoutMode != "Split" ? Color.purple.opacity(0.35) : Color.white.opacity(0.1))
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(sessionManager.layoutMode != "Split" ? Color.purple : Color.clear, lineWidth: 1.5)
-                            )
-                        }
-                        .buttonStyle(PlainButtonStyle())
-
-                        Button(action: {
-                            if sessionManager.layoutMode != "Split" {
-                                sessionManager.toggleLayout()
-                            }
-                        }) {
-                            VStack(spacing: 4) {
-                                Image(systemName: "rectangle.split.2x1.fill")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.blue)
-                                Text("Split")
-                                    .font(.system(size: 10, weight: .bold, design: .rounded))
-                                    .foregroundColor(.white)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(sessionManager.layoutMode == "Split" ? Color.blue.opacity(0.35) : Color.white.opacity(0.1))
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(sessionManager.layoutMode == "Split" ? Color.blue : Color.clear, lineWidth: 1.5)
-                            )
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-                }
-
-                // Section 2: Capture Mode (Photo / Video)
+                // Section 1: Capture Mode (Photo / Video)
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Capture Mode")
                         .font(.system(size: 11, weight: .bold, design: .rounded))
@@ -411,7 +354,7 @@ public struct WatchCameraControlsView: View {
                     }
                 }
 
-                // Section 3: Camera Swap
+                // Section 2: Camera Swap
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Primary Angle")
                         .font(.system(size: 11, weight: .bold, design: .rounded))

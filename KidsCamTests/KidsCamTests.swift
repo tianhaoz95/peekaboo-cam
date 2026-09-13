@@ -18,13 +18,6 @@ final class KidsCamTests: XCTestCase {
         super.tearDown()
     }
 
-    func testCameraManagerLayoutIsPiPOnly() {
-        let manager = DualCameraManager.shared
-        XCTAssertEqual(manager.layoutMode, .pip)
-        manager.toggleLayoutMode()
-        XCTAssertEqual(manager.layoutMode, .pip)
-    }
-
     func testCameraManagerSwapCameras() {
         let manager = DualCameraManager.shared
         manager.primaryPosition = .back
@@ -52,7 +45,6 @@ final class KidsCamTests: XCTestCase {
         let compositePip = DualPhotoRenderer.composeDualPhoto(
             backImage: back,
             frontImage: front,
-            layout: .pip,
             primaryPosition: .back
         )
         XCTAssertEqual(compositePip.size.width, 1200)
@@ -61,7 +53,6 @@ final class KidsCamTests: XCTestCase {
         let compositeFrontPrimary = DualPhotoRenderer.composeDualPhoto(
             backImage: back,
             frontImage: front,
-            layout: .pip,
             primaryPosition: .front
         )
         XCTAssertEqual(compositeFrontPrimary.size.width, 1200)
@@ -173,7 +164,6 @@ final class KidsCamTests: XCTestCase {
         let composite = DualPhotoRenderer.composeDualPhoto(
             backImage: back,
             frontImage: front,
-            layout: .pip,
             primaryPosition: .back,
             filter: .lion
         )
@@ -193,7 +183,6 @@ final class KidsCamTests: XCTestCase {
         let composite = DualPhotoRenderer.composeDualPhoto(
             backImage: DualPhotoRenderer.renderSimulatedBackCamera(),
             frontImage: sampleFace,
-            layout: .pip,
             primaryPosition: .front,
             filter: .crown
         )
@@ -323,7 +312,6 @@ final class KidsCamTests: XCTestCase {
         let sampleComposite = DualPhotoRenderer.composeDualPhoto(
             backImage: natureImg,
             frontImage: babyImg,
-            layout: .pip,
             primaryPosition: .front,
             filter: .lion
         )
@@ -412,7 +400,7 @@ final class KidsCamTests: XCTestCase {
         // 14. watch_toddler_lock.png (416 x 496) - Apple Watch Toddler Safe Screen Lock Active
         saveWatchScreenshot(view: WatchToddlerLockMockupView(), filename: "watch_toddler_lock.png")
 
-        // 15. watch_camera_controls.png (416 x 496) - Apple Watch Camera Angles & Dual Layout Controls
+        // 15. watch_camera_controls.png (416 x 496) - Apple Watch Camera Angle & PiP Controls
         saveWatchScreenshot(view: WatchCameraControlsMockupView(), filename: "watch_camera_controls.png")
 
         // 16. watch_complications.png (416 x 496) - Apple Watch Face Complications & Instant Launcher
@@ -457,20 +445,6 @@ final class KidsCamTests: XCTestCase {
 
         manager.setCaptureMode(.photo)
         XCTAssertEqual(manager.captureMode, .photo)
-    }
-
-    func testDualPhotoRendererSplitLayout() {
-        let back = DualPhotoRenderer.renderSimulatedBackCamera()
-        let front = DualPhotoRenderer.renderSimulatedFrontCamera()
-
-        let compositeSplit = DualPhotoRenderer.composeDualPhoto(
-            backImage: back,
-            frontImage: front,
-            layout: .split,
-            primaryPosition: .back
-        )
-        XCTAssertEqual(compositeSplit.size.width, 1200)
-        XCTAssertEqual(compositeSplit.size.height, 1600)
     }
 
     func testDualPhotoRendererAspectFillZeroDistortion() {
@@ -1229,7 +1203,7 @@ struct WatchToddlerLockMockupView: View {
     }
 }
 
-// 6. Camera Angles & Dual Layout Controls
+// 6. Camera Angles & Controls
 struct WatchCameraControlsMockupView: View {
     var body: some View {
         ZStack(alignment: .top) {
@@ -1237,7 +1211,7 @@ struct WatchCameraControlsMockupView: View {
 
             VStack(spacing: 7) {
                 HStack {
-                    Text("Camera & Layout")
+                    Text("Camera Controls")
                         .font(.system(size: 12, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                     Spacer()
@@ -1248,44 +1222,7 @@ struct WatchCameraControlsMockupView: View {
                 .padding(.horizontal, 8)
                 .padding(.top, 8)
 
-                // Section 1: Dual Layout Mode
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("DUAL LAYOUT")
-                        .font(.system(size: 8, weight: .bold, design: .rounded))
-                        .foregroundColor(.secondary)
-
-                    HStack(spacing: 6) {
-                        VStack(spacing: 3) {
-                            Image(systemName: "rectangle.inset.filled.and.cursorarrow")
-                                .font(.system(size: 18))
-                                .foregroundColor(.purple)
-                            Text("PiP (Floating)")
-                                .font(.system(size: 9, weight: .bold, design: .rounded))
-                                .foregroundColor(.white)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(Color.purple.opacity(0.35))
-                        .cornerRadius(10)
-                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.purple, lineWidth: 1.5))
-
-                        VStack(spacing: 3) {
-                            Image(systemName: "rectangle.split.2x1.fill")
-                                .font(.system(size: 18))
-                                .foregroundColor(.blue)
-                            Text("Split (50/50)")
-                                .font(.system(size: 9, weight: .bold, design: .rounded))
-                                .foregroundColor(.white)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(Color.white.opacity(0.1))
-                        .cornerRadius(10)
-                    }
-                }
-                .padding(.horizontal, 6)
-
-                // Section 2: Swap Angle
+                // Section 1: Swap Angle
                 VStack(alignment: .leading, spacing: 3) {
                     Text("CAMERA ANGLE")
                         .font(.system(size: 8, weight: .bold, design: .rounded))
@@ -1316,7 +1253,7 @@ struct WatchCameraControlsMockupView: View {
                 }
                 .padding(.horizontal, 6)
 
-                // Section 3: PiP Corner Position
+                // Section 2: PiP Corner Position
                 VStack(alignment: .leading, spacing: 3) {
                     Text("PIP CORNER POSITION")
                         .font(.system(size: 8, weight: .bold, design: .rounded))

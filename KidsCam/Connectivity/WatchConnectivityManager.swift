@@ -50,7 +50,6 @@ public final class WatchConnectivityManager: NSObject, ObservableObject {
 
         let context: [String: Any] = [
             "isToddlerLocked": DualCameraManager.shared.isToddlerLocked,
-            "layoutMode": DualCameraManager.shared.layoutMode.rawValue,
             "captureMode": DualCameraManager.shared.captureMode.rawValue,
             "isRecordingVideo": DualCameraManager.shared.isRecordingVideo,
             "videoRecordingDuration": DualCameraManager.shared.videoRecordingDuration,
@@ -162,10 +161,6 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 DualCameraManager.shared.swapCameras()
                 replyHandler(["status": "ok", "primary": (DualCameraManager.shared.primaryPosition == .back) ? "back" : "front"])
 
-            case "toggleLayout":
-                DualCameraManager.shared.toggleLayoutMode()
-                replyHandler(["status": "ok", "layout": DualCameraManager.shared.layoutMode.rawValue])
-
             case "toggleLock":
                 DualCameraManager.shared.toggleToddlerLock()
                 replyHandler(["status": "ok", "isLocked": DualCameraManager.shared.isToddlerLocked])
@@ -183,7 +178,6 @@ extension WatchConnectivityManager: WCSessionDelegate {
                 replyHandler([
                     "status": "ok",
                     "isToddlerLocked": DualCameraManager.shared.isToddlerLocked,
-                    "layoutMode": DualCameraManager.shared.layoutMode.rawValue,
                     "captureMode": DualCameraManager.shared.captureMode.rawValue,
                     "isRecordingVideo": DualCameraManager.shared.isRecordingVideo,
                     "videoRecordingDuration": DualCameraManager.shared.videoRecordingDuration,

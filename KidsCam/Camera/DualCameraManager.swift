@@ -4,20 +4,6 @@ import UIKit
 import Photos
 import Combine
 
-public enum CameraLayoutMode: String, CaseIterable, Identifiable {
-    case pip = "Picture-in-Picture"
-    case split = "Split"
-
-    public var id: String { rawValue }
-
-    public var iconName: String {
-        switch self {
-        case .pip: return "pip"
-        case .split: return "rectangle.split.2x1"
-        }
-    }
-}
-
 public enum CameraCaptureMode: String, CaseIterable, Identifiable {
     case photo = "Photo"
     case video = "Video"
@@ -66,7 +52,6 @@ public final class DualCameraManager: NSObject, ObservableObject {
     @Published public var permissionStatus: CameraPermissionStatus = .notDetermined
     @Published public var isRunning: Bool = false
     @Published public var isMultiCamSupported: Bool = false
-    @Published public var layoutMode: CameraLayoutMode = .pip
     @Published public var captureMode: CameraCaptureMode = .photo
     @Published public var primaryPosition: ActiveCameraPosition = .back
     @Published public var isToddlerLocked: Bool = false
@@ -408,10 +393,6 @@ public final class DualCameraManager: NSObject, ObservableObject {
         primaryPosition = (primaryPosition == .back) ? .front : .back
     }
 
-    public func toggleLayoutMode() {
-        layoutMode = .pip
-    }
-
     public func toggleToddlerLock() {
         isToddlerLocked.toggle()
         if isToddlerLocked {
@@ -534,7 +515,6 @@ public final class DualCameraManager: NSObject, ObservableObject {
             let composite = DualPhotoRenderer.composeDualPhoto(
                 backImage: natureImg,
                 frontImage: babyImg,
-                layout: self.layoutMode,
                 primaryPosition: self.storeListingBabyIsPrimary ? .front : .back,
                 filter: FaceTrackingManager.shared.activeFilter
             )
@@ -564,7 +544,6 @@ public final class DualCameraManager: NSObject, ObservableObject {
             let composite = DualPhotoRenderer.composeDualPhoto(
                 backImage: backImg,
                 frontImage: frontImg,
-                layout: self.layoutMode,
                 primaryPosition: self.primaryPosition
             )
 
@@ -596,7 +575,6 @@ public final class DualCameraManager: NSObject, ObservableObject {
         let composite = DualPhotoRenderer.composeDualPhoto(
             backImage: back,
             frontImage: front,
-            layout: self.layoutMode,
             primaryPosition: self.primaryPosition
         )
 

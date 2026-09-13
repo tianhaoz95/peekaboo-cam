@@ -9,7 +9,6 @@ public final class WatchSessionManager: NSObject, ObservableObject {
 
     @Published public var isReachable: Bool = false
     @Published public var isToddlerLocked: Bool = false
-    @Published public var layoutMode: String = "Picture-in-Picture"
     @Published public var captureMode: String = "Photo"
     @Published public var isRecordingVideo: Bool = false
     @Published public var videoDuration: TimeInterval = 0
@@ -143,17 +142,6 @@ public final class WatchSessionManager: NSObject, ObservableObject {
         }
     }
 
-    public func toggleLayout() {
-        WKInterfaceDevice.current().play(.click)
-        sendMessage(["action": "toggleLayout"]) { [weak self] reply in
-            if let layout = reply["layout"] as? String {
-                DispatchQueue.main.async {
-                    self?.layoutMode = layout
-                }
-            }
-        }
-    }
-
     private func sendMessage(_ message: [String: Any], reply: (([String: Any]) -> Void)? = nil, errorHandler: ((Error) -> Void)? = nil) {
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
@@ -196,9 +184,6 @@ extension WatchSessionManager: WCSessionDelegate {
         DispatchQueue.main.async {
             if let locked = applicationContext["isToddlerLocked"] as? Bool {
                 self.isToddlerLocked = locked
-            }
-            if let layout = applicationContext["layoutMode"] as? String {
-                self.layoutMode = layout
             }
             if let mode = applicationContext["captureMode"] as? String {
                 self.captureMode = mode
