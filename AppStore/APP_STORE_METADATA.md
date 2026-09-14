@@ -126,6 +126,7 @@ Thank you for reviewing ToddlerCam! Here are helpful notes to test all features:
 1. DUAL CAMERA HARDWARE & SIMULATION:
 - On physical devices (iPhone XS and newer running iOS 17+), ToddlerCam utilizes AVCaptureMultiCamSession to stream both front and back cameras simultaneously.
 - When running in the simulator or non-multicam hardware, ToddlerCam automatically provides a simulated interactive dual feed (interactive toddler selfie character on front + toy room on back) so all capture, stickers, layout modes, and UI workflows can be fully tested.
+- In Demo Mode (for screenshots and demonstration), ToddlerCam uses realistic AI-generated demonstration media (a toddler selfie in a car seat + forward car interior PiP view). All demo child portraits and demo imagery are 100% synthetic / AI-generated models and do not depict any real individuals.
 
 2. APPLE WATCH COMPANION APP:
 - Install the companion watchOS target (KidsCamWatch) on a paired Apple Watch.
@@ -152,15 +153,16 @@ Contact Email: review-contact@hejitech.com
 ## 7. Screenshot Assets & Copy
 
 ### A. iPhone Screenshots (6.9" Display — 1320 x 2868)
-1. **`appstore_iphone_fullscreen_pip.png`**: Dual Camera Fun (Baby selfie large view + State Park PiP + orbiting Lion companion).
-2. **`simulator_toddlercam.png`**: Magical Face Masks (Baby selfie large view + State Park PiP + orbiting Royal Crown).
+1. **`appstore_iphone_fullscreen_pip.png`**: Dual Camera Fun (AI-generated toddler selfie large view + Car interior PiP + orbiting Lion companion).
+2. **`simulator_toddlercam.png`**: Magical Face Masks (AI-generated toddler selfie large view + Car interior PiP + orbiting Royal Crown).
 3. **`iphone_video_playing.png`**: Interactive Sound Canvas (Touch anywhere for bubbly giggles, duck quacks, and pop particles).
-4. **`live_dual_video_stream.png`**: Dual Camera Preview (Baby selfie large view + State Park PiP + orbiting Unicorn companion).
+4. **`live_dual_video_stream.png`**: Dual Camera Preview (AI-generated toddler selfie large view + Car interior PiP + orbiting Unicorn companion).
 5. **`after_grant.png`**: Apple Guided Access Parent Tutorial (Step-by-step 4-step locking guide).
 6. **`system_camera_prompt.png`**: Toddler Safe Screen Lock (Child-proof touch protection overlay with unlock challenge).
-7. **`live_video_footage.png`**: Keepsake Dual Photo Output (Saved composite memory with baby and scenic park).
+7. **`live_video_footage.png`**: Keepsake Dual Photo Output (Saved composite memory with AI toddler and car interior view).
 8. **`iphone_paired_live.png`**: Watch Face & Complication Studio (Complication setup and preview).
 9. **`iphone_permission_dialog.png`**: Parent Hub & Settings (Safe parental gate and controls).
+*(Note: Child portraits depicted in screenshots are 100% synthetic, AI-generated demonstration models and do not represent any real person.)*
 
 ### B. Apple Watch Companion Screenshots (416 x 496)
 1. **`appstore_watch_remote.png`**: Parent Remote Control (Giant tactile wrist shutter, Quack/Woof sounds, quick layout & flip bar, live connection).

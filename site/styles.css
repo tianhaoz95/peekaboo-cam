@@ -266,6 +266,14 @@ section { padding: 68px 0; }
 .shot img { border-radius: 12px; margin: 0 auto 12px; }
 .shot span { font-size: 13px; font-weight: 600; color: #cdd5e4; }
 
+.disclaimer-note {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 13px;
+  color: #9aa5be;
+  line-height: 1.5;
+}
+
 .privacy-strip {
   background: linear-gradient(135deg, var(--mint), var(--sky));
   border-radius: 24px;
