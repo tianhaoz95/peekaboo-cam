@@ -46,9 +46,31 @@ public struct ToddlerCameraView: View {
                 // 2. Main Toddler Controls
                 VStack(spacing: 0) {
                     // Top Header Bar cleanly positioned below notch / Dynamic Island
-                    topHeaderBar
-                        .padding(.horizontal, 16)
-                        .padding(.top, max(geo.safeAreaInsets.top, 48) + 4)
+                    VStack(alignment: .leading, spacing: 6) {
+                        topHeaderBar
+                            .padding(.horizontal, 16)
+
+                        if cameraManager.isDemoMode {
+                            HStack(spacing: 5) {
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(.yellow)
+                                Text("DEMO MODE • AI-Generated (Not a real person)")
+                                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color.black.opacity(0.72))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                            )
+                            .padding(.horizontal, 16)
+                        }
+                    }
+                    .padding(.top, max(geo.safeAreaInsets.top, 48) + 4)
 
                     Spacer()
 

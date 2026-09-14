@@ -148,7 +148,10 @@ public struct ParentHubView: View {
                 }
 
                 // Section 5: Demo Mode
-                Section(header: Text("Demo Mode"), footer: Text("Simulates a high-resolution baby in the primary feed and scenic nature park in the PiP for capturing App Store listing screenshots.")) {
+                Section(
+                    header: Text("Demo Mode"),
+                    footer: Text("Simulates dual camera feeds using realistic AI-generated demonstration media (toddler selfie in car seat & car interior PiP) for screenshots and testing. All demo images are 100% synthetic / AI-generated and do not depict any real person.")
+                ) {
                     Toggle("Demo Mode", isOn: $cameraManager.isDemoMode)
                 }
 

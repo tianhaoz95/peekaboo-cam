@@ -77,7 +77,7 @@ public struct DualCameraPreviewView: View {
         let pipWidth: CGFloat = screenSize.width * 0.35
         let pipHeight: CGFloat = pipWidth * 1.33
         let secondaryPos: ActiveCameraPosition = (cameraManager.primaryPosition == .back) ? .front : .back
-        let topOffset: CGFloat = max(geo.safeAreaInsets.top, 48) + 50
+        let topOffset: CGFloat = max(geo.safeAreaInsets.top, 48) + 90
 
         ZStack {
             // Main Fullscreen Feed - Fills 100% of the display edge-to-edge
@@ -169,11 +169,31 @@ public struct DualCameraPreviewView: View {
     @ViewBuilder
     private func demoBabyFeed(targetSize: CGSize) -> some View {
         let img = cameraManager.demoBabyFrame ?? DualPhotoRenderer.renderBabyMockImage()
-        Image(uiImage: img)
-            .resizable()
-            .aspectRatio(contentMode: .fill)
-            .frame(width: targetSize.width, height: targetSize.height)
-            .clipped()
+        let isLarge = targetSize.width > 300
+        ZStack(alignment: .bottom) {
+            Image(uiImage: img)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: targetSize.width, height: targetSize.height)
+                .clipped()
+
+
+            if !isLarge {
+                // Compact badge inside PiP window
+                HStack(spacing: 3) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 8, weight: .bold))
+                    Text("AI-Generated")
+                        .font(.system(size: 8, weight: .bold, design: .rounded))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 3)
+                .background(Color.black.opacity(0.70))
+                .cornerRadius(6)
+                .padding(.bottom, 6)
+            }
+        }
     }
 
     @ViewBuilder

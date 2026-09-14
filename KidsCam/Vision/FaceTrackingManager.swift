@@ -52,9 +52,9 @@ public final class FaceTrackingManager: ObservableObject {
     // MARK: - Demo Mode / Mock Face Detection
     public func mockBabyFaceDetection() {
         self.isFaceDetected = true
-        self.normalizedFaceRect = CGRect(x: 0.24, y: 0.20, width: 0.52, height: 0.45)
-        self.eyesCenterNormalized = CGPoint(x: 0.50, y: 0.38)
-        self.foreheadCenterNormalized = CGPoint(x: 0.50, y: 0.22)
+        self.normalizedFaceRect = CGRect(x: 0.356, y: 0.303, width: 0.287, height: 0.215)
+        self.eyesCenterNormalized = CGPoint(x: 0.50, y: 0.389)
+        self.foreheadCenterNormalized = CGPoint(x: 0.50, y: 0.26)
         self.headRoll = 0.0
         self.headYaw = 0.0
         self.lastImageSize = CGSize(width: 800, height: 1200)

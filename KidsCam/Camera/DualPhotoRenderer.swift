@@ -9,7 +9,8 @@ public final class DualPhotoRenderer {
         frontImage: UIImage,
         primaryPosition: ActiveCameraPosition,
         filter: FaceEmojiType? = FaceTrackingManager.shared.activeFilter,
-        sticker: String? = nil
+        sticker: String? = nil,
+        isDemo: Bool = DualCameraManager.shared.isDemoMode
     ) -> UIImage {
         let size = CGSize(width: 1200, height: 1600)
         let format = UIGraphicsImageRendererFormat()
@@ -100,7 +101,7 @@ public final class DualPhotoRenderer {
             }
 
             // Watermark ribbon at bottom
-            drawWatermark(size: size)
+            drawWatermark(size: size, isDemo: isDemo)
         }
     }
 
@@ -178,10 +179,10 @@ public final class DualPhotoRenderer {
         return buffer
     }
 
-    private static func drawWatermark(size: CGSize) {
-        let ribbonHeight: CGFloat = 80
+    private static func drawWatermark(size: CGSize, isDemo: Bool = false) {
+        let ribbonHeight: CGFloat = isDemo ? 104 : 80
 
-        let colors = [UIColor.black.withAlphaComponent(0.6).cgColor, UIColor.clear.cgColor]
+        let colors = [UIColor.black.withAlphaComponent(0.65).cgColor, UIColor.clear.cgColor]
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         if let grad = CGGradient(colorsSpace: colorSpace, colors: colors as CFArray, locations: [1.0, 0.0]) {
             guard let ctx = UIGraphicsGetCurrentContext() else { return }
@@ -189,13 +190,24 @@ public final class DualPhotoRenderer {
         }
 
         let title = "📸 ToddlerCam Dual Shot"
-        let font = UIFont.systemFont(ofSize: 28, weight: .bold)
+        let font = UIFont.systemFont(ofSize: isDemo ? 24 : 28, weight: .bold)
         let attrs: [NSAttributedString.Key: Any] = [
             .font: font,
             .foregroundColor: UIColor.white
         ]
         let titleStr = NSString(string: title)
-        titleStr.draw(at: CGPoint(x: 30, y: size.height - 55), withAttributes: attrs)
+        let titleY = isDemo ? (size.height - 74) : (size.height - 55)
+        titleStr.draw(at: CGPoint(x: 30, y: titleY), withAttributes: attrs)
+
+        if isDemo {
+            let demoTag = "AI-Generated Demonstration • Does not represent a real person"
+            let demoAttrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 18, weight: .semibold),
+                .foregroundColor: UIColor(red: 1.0, green: 0.9, blue: 0.4, alpha: 0.95)
+            ]
+            let demoStr = NSString(string: demoTag)
+            demoStr.draw(at: CGPoint(x: 30, y: size.height - 40), withAttributes: demoAttrs)
+        }
 
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
@@ -206,7 +218,7 @@ public final class DualPhotoRenderer {
             .foregroundColor: UIColor(white: 0.9, alpha: 0.9)
         ]
         let dateSize = dateStr.size(withAttributes: dateAttrs)
-        dateStr.draw(at: CGPoint(x: size.width - dateSize.width - 30, y: size.height - 52), withAttributes: dateAttrs)
+        dateStr.draw(at: CGPoint(x: size.width - dateSize.width - 30, y: titleY + (isDemo ? 1 : 3)), withAttributes: dateAttrs)
     }
 
     public static func renderSimulatedBackCamera() -> UIImage {
@@ -302,10 +314,50 @@ public final class DualPhotoRenderer {
         }
     }
 
-    // MARK: - Demo Mode Feeds (Baby & Nature / Amusement Park)
+    // MARK: - Demo Mode Feeds (AI-Generated Kid Selfie & Car View)
 
-    /// Renders a cheerful, high-resolution portrait illustration of a baby for store listing screenshots
+    /// Helper to reliably load demo images from Asset Catalog, App/Framework Bundle, or repo resources
+    public static func loadDemoImage(named name: String, filename: String) -> UIImage? {
+        if let img = UIImage(named: name) {
+            return img
+        }
+        if let bundle = Bundle(identifier: "com.hejitech.kidscam"), let img = UIImage(named: name, in: bundle, compatibleWith: nil) {
+            return img
+        }
+        let frameworkBundle = Bundle(for: DualCameraManager.self)
+        if let img = UIImage(named: name, in: frameworkBundle, compatibleWith: nil) {
+            return img
+        }
+        if let path = frameworkBundle.path(forResource: filename, ofType: "jpg"), let img = UIImage(contentsOfFile: path) {
+            return img
+        }
+        if let path = Bundle.main.path(forResource: filename, ofType: "jpg"), let img = UIImage(contentsOfFile: path) {
+            return img
+        }
+        let devPaths = [
+            "/Users/tianhaoz/GitHub/kids-cam/KidsCam/Resources/" + filename + ".jpg",
+            "/Users/tianhaoz/GitHub/kids-cam/KidsCam/Resources/Assets.xcassets/" + name + ".imageset/" + filename + ".jpg"
+        ]
+        for p in devPaths {
+            if FileManager.default.fileExists(atPath: p), let img = UIImage(contentsOfFile: p) {
+                return img
+            }
+        }
+        return nil
+    }
+
+    /// Renders a realistic AI-generated portrait of a toddler in a car seat for demo mode and store listing screenshots
     public static func renderBabyMockImage(size: CGSize = CGSize(width: 800, height: 1200)) -> UIImage {
+        if let baseImage = loadDemoImage(named: "DemoKidSelfie", filename: "demo_kid_selfie") {
+            return UIGraphicsImageRenderer(size: size).image { ctx in
+                drawImageAspectFill(baseImage, in: CGRect(origin: .zero, size: size), context: ctx.cgContext)
+            }
+        }
+        return renderProceduralBabyMockImage(size: size)
+    }
+
+    /// Procedural drawing fallback if bundle image is not available
+    public static func renderProceduralBabyMockImage(size: CGSize = CGSize(width: 800, height: 1200)) -> UIImage {
         return UIGraphicsImageRenderer(size: size).image { ctx in
             let cg = ctx.cgContext
 
@@ -467,8 +519,23 @@ public final class DualPhotoRenderer {
         }
     }
 
-    /// Renders a scenic state park and amusement park landscape for the picture-in-picture view
+    /// Renders the demo car self-view / rear view for the picture-in-picture view
     public static func renderNatureParkMockImage(size: CGSize = CGSize(width: 800, height: 1200)) -> UIImage {
+        return renderCarSelfViewMockImage(size: size)
+    }
+
+    /// Renders the realistic AI-generated car interior view for PiP in demo mode
+    public static func renderCarSelfViewMockImage(size: CGSize = CGSize(width: 800, height: 1200)) -> UIImage {
+        if let baseImage = loadDemoImage(named: "DemoCarSelfView", filename: "demo_car_self_view") {
+            return UIGraphicsImageRenderer(size: size).image { ctx in
+                drawImageAspectFill(baseImage, in: CGRect(origin: .zero, size: size), context: ctx.cgContext)
+            }
+        }
+        return renderProceduralNatureParkMockImage(size: size)
+    }
+
+    /// Procedural drawing fallback if bundle image is not available
+    public static func renderProceduralNatureParkMockImage(size: CGSize = CGSize(width: 800, height: 1200)) -> UIImage {
         return UIGraphicsImageRenderer(size: size).image { ctx in
             let cg = ctx.cgContext
 
