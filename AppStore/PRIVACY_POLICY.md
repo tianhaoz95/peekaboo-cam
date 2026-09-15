@@ -64,6 +64,6 @@ We may update our Privacy Policy from time to time. Any changes will be posted a
 
 ### 7. Contact Us
 If you have any questions or suggestions regarding our Privacy Policy, please contact:
-- **Email:** `privacy@hejitech.com`
+- **Email:** `info@hejitech.com`
 - **Website:** `https://tianhaoz95.github.io/peekaboo-cam/`
 - **Developer:** HEJI TECHNOLOGY LLC
