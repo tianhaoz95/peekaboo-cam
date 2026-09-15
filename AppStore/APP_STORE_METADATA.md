@@ -100,20 +100,64 @@ In App Store Connect under **App Privacy**:
 
 ---
 
-## 5. Age Rating & Content Questionnaire
-Answer **NO / NONE** to all content questionnaires:
-* Cartoon or Fantasy Violence: **None**
-* Realistic Violence: **None**
-* Sexual Content or Nudity: **None**
-* Alcohol, Tobacco, or Drug Use: **None**
-* Gambling or Contests: **None**
-* Horror / Fear Themes: **None**
-* Medical / Treatment Information: **None**
-* Profanity or Crude Humor: **None**
-* Unrestricted Web Access: **No**
-* Made for Kids: **Yes (Ages 5 and Under)**
+---
 
-**Resulting Rating:** 4+ (Made for Kids)
+## 5. Content Rights & Age Rating Questionnaire
+
+### A. Content Rights
+* **Does your app contain, show, or access third-party content?**
+  * **Answer:** `No, it does not contain, show, or access third-party content`
+  * *Reasoning:* ToddlerCam is a standalone, 100% offline camera utility. All photos are captured directly from device hardware and stored locally in Apple Photos. All UI stickers, emojis, and sound effects are bundled local assets. No external feeds, copyrighted media, or third-party web content are accessed.
+
+---
+
+### B. Age Rating Questionnaire (Steps 1–7)
+
+#### Step 1: Features
+* **In-App Controls:**
+  * Parental Controls: **NO** *(No content filtering or usage limits; parental math challenge protects settings rather than filtering mature content)*
+  * Age Assurance: **NO** *(No age verification, ID checks, or Declared Age Range API)*
+* **Capabilities:**
+  * Unrestricted Web Access: **NO** *(No embedded browser or web navigation)*
+  * User-Generated Content: **NO** *(Photos stay strictly local on device and in Apple Photos; no broad distribution or public upload)*
+  * Social Media: **NO** *(No feeds, likes, shares, or viral discovery)*
+  * Social Media Disabled for Users Under 13: **NO** *(No social media features present or gated)*
+  * Messaging and Chat: **NO** *(No user-to-user communication; Watch remote is a local hardware trigger)*
+  * Advertising: **NO** *(Zero ads, zero commercial promotions)*
+
+#### Step 2: Mature Themes
+* Profanity or Crude Humor: **NONE**
+* Horror/Fear Themes: **NONE**
+* Alcohol, Tobacco, or Drug Use or References: **NONE**
+
+#### Step 3: Medical or Wellness
+* Medical or Treatment Information: **NONE**
+* Health or Wellness Topics: **NO**
+
+#### Step 4: Sexuality or Nudity
+* Mature or Suggestive Themes: **NONE**
+* Sexual Content or Nudity: **NONE**
+* Graphic Sexual Content and Nudity: **NONE**
+
+#### Step 5: Violence
+* Cartoon or Fantasy Violence: **NONE** *(Bubble popping is a playful touch canvas, not violence)*
+* Realistic Violence: **NONE**
+* Prolonged Graphic or Sadistic Realistic Violence: **NONE**
+* Guns or Other Weapons: **NONE**
+
+#### Step 6: Chance-Based Activities
+* Simulated Gambling: **NONE**
+* Contests: **NONE**
+* Gambling: **NO**
+* Loot Boxes: **NO**
+
+#### Step 7: Calculated Rating & Override
+* **Calculated Rating:** `4+`
+* **Age Categories and Override:** **Made for Kids**
+  * **Age Band:** `Ages 5 & Under`
+* **Age Suitability URL (Optional):** *(Leave blank)*
+
+**Final Resulting Badge:** **4+ (Made for Kids: Ages 5 & Under)**
 
 ---
 
