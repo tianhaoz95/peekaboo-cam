@@ -152,7 +152,9 @@ Contact Email: review-contact@hejitech.com
 
 ## 7. Screenshot Assets & Copy
 
-### A. iPhone Screenshots (6.5" / 6.7" Display — 1284 x 2778)
+Screenshots are organized into dedicated device subdirectories under `AppStore/Screenshots/`:
+
+### A. iPhone Screenshots (`AppStore/Screenshots/iPhone/` — 6.5" / 6.7" Display: 1284 x 2778)
 1. **`appstore_iphone_fullscreen_pip.png`**: Dual Camera Fun (AI-generated toddler selfie large view + Car interior PiP + orbiting Lion companion).
 2. **`simulator_toddlercam.png`**: Magical Face Masks (AI-generated toddler selfie large view + Car interior PiP + orbiting Royal Crown).
 3. **`iphone_video_playing.png`**: Interactive Sound Canvas (Touch anywhere for bubbly giggles, duck quacks, and pop particles).
@@ -164,7 +166,18 @@ Contact Email: review-contact@hejitech.com
 9. **`iphone_permission_dialog.png`**: Parent Hub & Settings (Safe parental gate and controls).
 *(Note: Child portraits depicted in screenshots are 100% synthetic, AI-generated demonstration models and do not represent any real person.)*
 
-### B. Apple Watch Companion Screenshots (416 x 496)
+### B. iPad Screenshots (`AppStore/Screenshots/iPad/` — 13" / 12.9" Display: 2064 x 2752)
+1. **`ipad_13_fullscreen_pip.png`**: Dual Camera Fun (AI-generated toddler selfie large view + Car interior PiP + orbiting Lion companion on iPad).
+2. **`ipad_13_simulator_toddlercam.png`**: Magical Face Masks (AI-generated toddler selfie large view + Car interior PiP + orbiting Royal Crown on iPad).
+3. **`ipad_13_video_playing.png`**: Interactive Sound Canvas (Touch anywhere for bubbly giggles, duck quacks, and pop particles on iPad).
+4. **`ipad_13_dual_video_stream.png`**: Dual Camera Preview (AI-generated toddler selfie large view + Car interior PiP + orbiting Unicorn companion on iPad).
+5. **`ipad_13_after_grant.png`**: Apple Guided Access Parent Tutorial (Step-by-step 4-step locking guide scaled for iPad).
+6. **`ipad_13_system_camera_prompt.png`**: Toddler Safe Screen Lock (Child-proof touch protection overlay with unlock challenge on iPad).
+7. **`ipad_13_live_video_footage.png`**: Keepsake Dual Photo Output (Saved composite memory with AI toddler and car interior view on iPad).
+8. **`ipad_13_paired_live.png`**: Watch Face & Complication Studio (Watch complication setup and preview on iPad).
+9. **`ipad_13_permission_dialog.png`**: Parent Hub & Settings (Safe parental gate, sound themes, and controls on iPad).
+
+### C. Apple Watch Companion Screenshots (`AppStore/Screenshots/Watch/` — 416 x 496)
 1. **`appstore_watch_remote.png`**: Parent Remote Control (Giant tactile wrist shutter, Quack/Woof sounds, quick layout & flip bar, live connection).
 2. **`watch_photo_review.png`**: Instant Wrist Photo Review (Just-captured dual keepsake thumbnail preview right on parent's wrist).
 3. **`watch_paired_live.png`**: Apple Vision Face Masks (Remote selector with live tracking status and active mask highlight).

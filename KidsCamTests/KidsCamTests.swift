@@ -385,6 +385,76 @@ final class KidsCamTests: XCTestCase {
         // 9. iphone_permission_dialog.png (1284 x 2778) - Parent Hub Settings
         saveIPhoneScreenshot(view: DeviceSheetContainer { ParentHubView() }, filename: "iphone_permission_dialog.png")
 
+        // ====================================================
+        // iPad 13" Screenshots (2064 x 2752) -> AppStore/Screenshots/iPad/
+        // ====================================================
+        // 1. ipad_13_fullscreen_pip.png - Lion Filter
+        camera.demoBabyIsPrimary = true
+        FaceTrackingManager.shared.setActiveFilter(.lion)
+        FaceTrackingManager.shared.mockBabyFaceDetection()
+        saveIPadScreenshot(view: ToddlerCameraView(), filename: "ipad_13_fullscreen_pip.png")
+
+        // 2. ipad_13_simulator_toddlercam.png - Crown Filter
+        FaceTrackingManager.shared.setActiveFilter(.crown)
+        saveIPadScreenshot(view: ToddlerCameraView(), filename: "ipad_13_simulator_toddlercam.png")
+
+        // 3. ipad_13_video_playing.png - Silly Soundboard & Touch Bubbles Interactive Canvas
+        FaceTrackingManager.shared.setActiveFilter(.lion)
+        let ipadTouchDemo = ZStack {
+            ToddlerCameraView()
+            // Cheerful touch pop particles spread across 1032 x 1376 iPad canvas
+            Text("🫧").font(.system(size: 76)).position(x: 220, y: 560)
+            Text("⭐").font(.system(size: 68)).position(x: 780, y: 500)
+            Text("🎉").font(.system(size: 72)).position(x: 280, y: 860)
+            Text("✨").font(.system(size: 60)).position(x: 820, y: 800)
+            Text("🐥").font(.system(size: 74)).position(x: 540, y: 1020)
+            Text("🎈").font(.system(size: 70)).position(x: 180, y: 1120)
+
+            // Cheerful hint banner
+            VStack {
+                Spacer()
+                HStack(spacing: 12) {
+                    Text("🦆").font(.system(size: 26))
+                    Text("Tap anywhere for silly sounds!")
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                    Text("👶").font(.system(size: 26))
+                }
+                .padding(.horizontal, 28)
+                .padding(.vertical, 16)
+                .background(Color.purple.opacity(0.88))
+                .cornerRadius(28)
+                .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 5)
+                .padding(.bottom, 160)
+            }
+        }
+        saveIPadScreenshot(view: ipadTouchDemo, filename: "ipad_13_video_playing.png")
+
+        // 4. ipad_13_dual_video_stream.png - Unicorn Filter
+        FaceTrackingManager.shared.setActiveFilter(.unicorn)
+        saveIPadScreenshot(view: ToddlerCameraView(), filename: "ipad_13_dual_video_stream.png")
+        FaceTrackingManager.shared.setActiveFilter(.lion)
+
+        // 5. ipad_13_after_grant.png - Guided Access Guide Sheet for iPad
+        saveIPadScreenshot(view: IPadDeviceSheetContainer { GuidedAccessGuideView() }, filename: "ipad_13_after_grant.png")
+
+        // 6. ipad_13_system_camera_prompt.png - Toddler Safe Lock Screen on iPad
+        camera.isToddlerLocked = true
+        saveIPadScreenshot(view: ToddlerCameraView(), filename: "ipad_13_system_camera_prompt.png")
+        camera.isToddlerLocked = false
+
+        // 7. ipad_13_live_video_footage.png - Dual Keepsake Photo Review
+        saveIPadScreenshot(view: IPadKeepsakePhotoReviewScreenshotView(photo: sampleComposite), filename: "ipad_13_live_video_footage.png")
+
+        // 8. ipad_13_paired_live.png - Watch Face Studio on iPad
+        saveIPadScreenshot(view: IPadDeviceSheetContainer { WatchFaceStudioView() }, filename: "ipad_13_paired_live.png")
+
+        // 9. ipad_13_permission_dialog.png - Parent Hub Settings on iPad
+        saveIPadScreenshot(view: IPadDeviceSheetContainer { ParentHubView() }, filename: "ipad_13_permission_dialog.png")
+
+        // ====================================================
+        // Apple Watch Screenshots (416 x 496) -> AppStore/Screenshots/Watch/
+        // ====================================================
         // 10. appstore_watch_remote.png (416 x 496) - Apple Watch Remote (Main)
         saveWatchScreenshot(view: WatchRemoteMockupView(), filename: "appstore_watch_remote.png")
 
@@ -429,7 +499,30 @@ final class KidsCamTests: XCTestCase {
         }
 
         if let data = image.pngData() {
-            let path = "/Users/tianhaoz/GitHub/kids-cam/AppStore/Screenshots/\(filename)"
+            let dir = "/Users/tianhaoz/GitHub/kids-cam/AppStore/Screenshots/iPhone"
+            try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+            let path = "\(dir)/\(filename)"
+            try? data.write(to: URL(fileURLWithPath: path))
+        }
+    }
+
+    private func saveIPadScreenshot<V: View>(view: V, filename: String) {
+        let controller = UIHostingController(rootView: view)
+        controller.view.bounds = CGRect(x: 0, y: 0, width: 1032, height: 1376)
+        controller.view.backgroundColor = .black
+        controller.view.layoutIfNeeded()
+
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 2.0 // 1032*2 = 2064, 1376*2 = 2752 (App Store iPad 13" requirement)
+        let renderer = UIGraphicsImageRenderer(size: controller.view.bounds.size, format: format)
+        let image = renderer.image { _ in
+            controller.view.drawHierarchy(in: controller.view.bounds, afterScreenUpdates: true)
+        }
+
+        if let data = image.pngData() {
+            let dir = "/Users/tianhaoz/GitHub/kids-cam/AppStore/Screenshots/iPad"
+            try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+            let path = "\(dir)/\(filename)"
             try? data.write(to: URL(fileURLWithPath: path))
         }
     }
@@ -507,7 +600,9 @@ final class KidsCamTests: XCTestCase {
         let renderer = ImageRenderer(content: view.frame(width: 208, height: 248))
         renderer.scale = 2.0
         if let uiImage = renderer.uiImage, let data = uiImage.pngData() {
-            let path = "/Users/tianhaoz/GitHub/kids-cam/AppStore/Screenshots/\(filename)"
+            let dir = "/Users/tianhaoz/GitHub/kids-cam/AppStore/Screenshots/Watch"
+            try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+            let path = "\(dir)/\(filename)"
             try? data.write(to: URL(fileURLWithPath: path))
         }
     }
@@ -558,11 +653,62 @@ struct DeviceSheetContainer<Content: View>: View {
                     .padding(.bottom, 8)
             }
         }
-        .frame(width: 440, height: 956)
+        .frame(width: 428, height: 926)
     }
 }
 
-// MARK: - Full-Bleed Keepsake Photo Review Screen
+// MARK: - Edge-to-Edge Sheet Container for iPad 13" Screenshots
+struct IPadDeviceSheetContainer<Content: View>: View {
+    let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    var body: some View {
+        ZStack {
+            Color(red: 0.08, green: 0.08, blue: 0.10)
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // Native iPad Status Bar
+                HStack {
+                    Text("9:41")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                    Spacer()
+                    HStack(spacing: 8) {
+                        Image(systemName: "wifi")
+                            .font(.system(size: 16, weight: .semibold))
+                        Text("100%")
+                            .font(.system(size: 15, weight: .medium, design: .rounded))
+                        Image(systemName: "battery.100")
+                            .font(.system(size: 17, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                }
+                .padding(.horizontal, 36)
+                .padding(.top, 18)
+                .padding(.bottom, 12)
+
+                // Content View
+                content
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                // Native iPad Home Indicator
+                Capsule()
+                    .fill(Color.white.opacity(0.35))
+                    .frame(width: 240, height: 5)
+                    .padding(.top, 8)
+                    .padding(.bottom, 12)
+            }
+        }
+        .frame(width: 1032, height: 1376)
+    }
+}
+
+// MARK: - Full-Bleed Keepsake Photo Review Screen (iPhone)
 struct KeepsakePhotoReviewScreenshotView: View {
     let photo: UIImage
 
@@ -572,7 +718,7 @@ struct KeepsakePhotoReviewScreenshotView: View {
             Image(uiImage: photo)
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .frame(width: 440, height: 956)
+                .frame(width: 428, height: 926)
                 .blur(radius: 40)
                 .overlay(Color.black.opacity(0.50))
                 .ignoresSafeArea()
@@ -703,7 +849,152 @@ struct KeepsakePhotoReviewScreenshotView: View {
                     .padding(.bottom, 8)
             }
         }
-        .frame(width: 440, height: 956)
+        .frame(width: 428, height: 926)
+    }
+}
+
+// MARK: - Full-Bleed Keepsake Photo Review Screen (iPad 13")
+struct IPadKeepsakePhotoReviewScreenshotView: View {
+    let photo: UIImage
+
+    var body: some View {
+        ZStack {
+            // Ambient full-bleed blurred backdrop
+            Image(uiImage: photo)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 1032, height: 1376)
+                .blur(radius: 50)
+                .overlay(Color.black.opacity(0.50))
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // Native iPad Status Bar
+                HStack {
+                    Text("9:41")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                    Spacer()
+                    HStack(spacing: 8) {
+                        Image(systemName: "wifi")
+                            .font(.system(size: 16, weight: .semibold))
+                        Text("100%")
+                            .font(.system(size: 15, weight: .medium, design: .rounded))
+                        Image(systemName: "battery.100")
+                            .font(.system(size: 17, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                }
+                .padding(.horizontal, 36)
+                .padding(.top, 18)
+                .padding(.bottom, 16)
+
+                // Top Navigation Header
+                HStack {
+                    HStack(spacing: 8) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 20, weight: .bold))
+                        Text("Camera")
+                            .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    }
+                    .foregroundColor(.white)
+
+                    Spacer()
+
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                            .font(.system(size: 16))
+                        Text("Saved to Photos")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundColor(.green)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(Color.black.opacity(0.55))
+                    .cornerRadius(20)
+
+                    Spacer()
+
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 36)
+                .padding(.bottom, 24)
+
+                Spacer()
+
+                // Centerpiece: The High-Resolution Keepsake Dual Photo Card
+                Image(uiImage: photo)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: 820, maxHeight: 920)
+                    .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 32, style: .continuous)
+                            .stroke(Color.white.opacity(0.35), lineWidth: 2)
+                    )
+                    .shadow(color: Color.black.opacity(0.65), radius: 36, x: 0, y: 18)
+
+                Spacer()
+
+                // Bottom Metadata & Actions
+                VStack(spacing: 20) {
+                    HStack(spacing: 10) {
+                        Label("Dual Camera Memory", systemImage: "sparkles")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                        Text("•")
+                            .foregroundColor(.white.opacity(0.6))
+                        Text("Front + Rear Simultaneous")
+                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.85))
+                    }
+                    .padding(.horizontal, 22)
+                    .padding(.vertical, 10)
+                    .background(Color.white.opacity(0.18))
+                    .cornerRadius(24)
+
+                    HStack(spacing: 24) {
+                        Button(action: {}) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "square.and.arrow.up.fill")
+                                Text("Share Memory")
+                            }
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(.black)
+                            .frame(maxWidth: 320)
+                            .padding(.vertical, 16)
+                            .background(Color.white)
+                            .cornerRadius(20)
+                        }
+
+                        Button(action: {}) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "camera.fill")
+                                Text("Snap Another")
+                            }
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: 320)
+                            .padding(.vertical, 16)
+                            .background(Color.white.opacity(0.25))
+                            .cornerRadius(20)
+                        }
+                    }
+                    .padding(.horizontal, 36)
+                }
+                .padding(.bottom, 24)
+
+                // Home Indicator
+                Capsule()
+                    .fill(Color.white.opacity(0.35))
+                    .frame(width: 240, height: 5)
+                    .padding(.bottom, 12)
+            }
+        }
+        .frame(width: 1032, height: 1376)
     }
 }
 
