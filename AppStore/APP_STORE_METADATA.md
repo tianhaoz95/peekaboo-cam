@@ -152,7 +152,7 @@ Contact Email: review-contact@hejitech.com
 
 ## 7. Screenshot Assets & Copy
 
-### A. iPhone Screenshots (6.9" Display — 1320 x 2868)
+### A. iPhone Screenshots (6.5" / 6.7" Display — 1284 x 2778)
 1. **`appstore_iphone_fullscreen_pip.png`**: Dual Camera Fun (AI-generated toddler selfie large view + Car interior PiP + orbiting Lion companion).
 2. **`simulator_toddlercam.png`**: Magical Face Masks (AI-generated toddler selfie large view + Car interior PiP + orbiting Royal Crown).
 3. **`iphone_video_playing.png`**: Interactive Sound Canvas (Touch anywhere for bubbly giggles, duck quacks, and pop particles).

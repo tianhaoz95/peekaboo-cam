@@ -322,17 +322,17 @@ final class KidsCamTests: XCTestCase {
             backImage: natureImg
         )
 
-        // 1. appstore_iphone_fullscreen_pip.png (1320 x 2868) - Baby Large, Nature PiP, Flying Lion
+        // 1. appstore_iphone_fullscreen_pip.png (1284 x 2778) - Baby Large, Nature PiP, Flying Lion
         camera.demoBabyIsPrimary = true
         FaceTrackingManager.shared.setActiveFilter(.lion)
         FaceTrackingManager.shared.mockBabyFaceDetection()
         saveIPhoneScreenshot(view: ToddlerCameraView(), filename: "appstore_iphone_fullscreen_pip.png")
 
-        // 2. simulator_toddlercam.png (1320 x 2868) - Baby Large, Nature PiP, Flying Crown
+        // 2. simulator_toddlercam.png (1284 x 2778) - Baby Large, Nature PiP, Flying Crown
         FaceTrackingManager.shared.setActiveFilter(.crown)
         saveIPhoneScreenshot(view: ToddlerCameraView(), filename: "simulator_toddlercam.png")
 
-        // 3. iphone_video_playing.png (1320 x 2868) - Interactive touch sounds & bubbles
+        // 3. iphone_video_playing.png (1284 x 2778) - Interactive touch sounds & bubbles
         FaceTrackingManager.shared.setActiveFilter(.lion)
         let touchAnywhereDemo = ZStack {
             ToddlerCameraView()
@@ -363,26 +363,26 @@ final class KidsCamTests: XCTestCase {
         }
         saveIPhoneScreenshot(view: touchAnywhereDemo, filename: "iphone_video_playing.png")
 
-        // 4. live_dual_video_stream.png (1320 x 2868) - Dual Camera View with Unicorn Companion
+        // 4. live_dual_video_stream.png (1284 x 2778) - Dual Camera View with Unicorn Companion
         FaceTrackingManager.shared.setActiveFilter(.unicorn)
         saveIPhoneScreenshot(view: ToddlerCameraView(), filename: "live_dual_video_stream.png")
         FaceTrackingManager.shared.setActiveFilter(.lion)
 
-        // 5. after_grant.png (1320 x 2868) - Guided Access Guide Sheet
+        // 5. after_grant.png (1284 x 2778) - Guided Access Guide Sheet
         saveIPhoneScreenshot(view: DeviceSheetContainer { GuidedAccessGuideView() }, filename: "after_grant.png")
 
-        // 6. system_camera_prompt.png (1320 x 2868) - Toddler Safe Lock Screen
+        // 6. system_camera_prompt.png (1284 x 2778) - Toddler Safe Lock Screen
         camera.isToddlerLocked = true
         saveIPhoneScreenshot(view: ToddlerCameraView(), filename: "system_camera_prompt.png")
         camera.isToddlerLocked = false
 
-        // 7. live_video_footage.png (1320 x 2868) - Keepsake Dual Photo Output
+        // 7. live_video_footage.png (1284 x 2778) - Keepsake Dual Photo Output
         saveIPhoneScreenshot(view: KeepsakePhotoReviewScreenshotView(photo: sampleComposite), filename: "live_video_footage.png")
 
-        // 8. iphone_paired_live.png (1320 x 2868) - Watch Face Studio
+        // 8. iphone_paired_live.png (1284 x 2778) - Watch Face Studio
         saveIPhoneScreenshot(view: DeviceSheetContainer { WatchFaceStudioView() }, filename: "iphone_paired_live.png")
 
-        // 9. iphone_permission_dialog.png (1320 x 2868) - Parent Hub Settings
+        // 9. iphone_permission_dialog.png (1284 x 2778) - Parent Hub Settings
         saveIPhoneScreenshot(view: DeviceSheetContainer { ParentHubView() }, filename: "iphone_permission_dialog.png")
 
         // 10. appstore_watch_remote.png (416 x 496) - Apple Watch Remote (Main)
@@ -417,12 +417,12 @@ final class KidsCamTests: XCTestCase {
 
     private func saveIPhoneScreenshot<V: View>(view: V, filename: String) {
         let controller = UIHostingController(rootView: view)
-        controller.view.bounds = CGRect(x: 0, y: 0, width: 440, height: 956)
+        controller.view.bounds = CGRect(x: 0, y: 0, width: 428, height: 926)
         controller.view.backgroundColor = .black
         controller.view.layoutIfNeeded()
 
         let format = UIGraphicsImageRendererFormat()
-        format.scale = 3.0 // 440*3 = 1320, 956*3 = 2868
+        format.scale = 3.0 // 428*3 = 1284, 926*3 = 2778 (App Store 6.5" requirement)
         let renderer = UIGraphicsImageRenderer(size: controller.view.bounds.size, format: format)
         let image = renderer.image { _ in
             controller.view.drawHierarchy(in: controller.view.bounds, afterScreenUpdates: true)
