@@ -1,13 +1,13 @@
 # Privacy Policy for ToddlerCam (KidsCam)
 
 **Effective Date:** September 9, 2026  
-**Developer:** HejiTech (`com.hejitech.kidscam`)  
+**Developer:** HEJI TECHNOLOGY LLC (`com.hejitech.kidscam`)  
 **App Category:** Kids (Ages 5 and Under) & Photo / Video  
 
 ---
 
 ### 1. Introduction & Commitment to Child Safety
-HejiTech ("we", "our", or "us") built **ToddlerCam** as a child-safe, privacy-by-design dual camera and parent remote control application designed specifically for toddlers, babies, and young children. We strictly respect the privacy of children and families.
+HEJI TECHNOLOGY LLC ("we", "our", or "us") built **ToddlerCam** as a child-safe, privacy-by-design dual camera and parent remote control application designed specifically for toddlers, babies, and young children. We strictly respect the privacy of children and families.
 
 ToddlerCam complies with:
 - The **Children's Online Privacy Protection Act (COPPA)**
@@ -66,4 +66,4 @@ We may update our Privacy Policy from time to time. Any changes will be posted a
 If you have any questions or suggestions regarding our Privacy Policy, please contact:
 - **Email:** `privacy@hejitech.com`
 - **Website:** `https://tianhaoz95.github.io/peekaboo-cam/`
-- **Developer:** HejiTech
+- **Developer:** HEJI TECHNOLOGY LLC

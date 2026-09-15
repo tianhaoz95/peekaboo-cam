@@ -10,7 +10,7 @@
 * **Secondary Category:** Kids
 * **Kids Designation:** Made for Kids (Ages 5 and Under)
 * **Price:** Free / Tier 0 (No in-app purchases, No ads)
-* **Copyright:** © 2026 HejiTech LLC
+* **Copyright:** 2026 HEJI TECHNOLOGY LLC
 
 ---
 
