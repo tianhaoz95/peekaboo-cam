@@ -113,7 +113,7 @@ img { display: block; max-width: 100%; }
   align-items: center;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 840px) {
   .hero .wrap { grid-template-columns: 1fr; text-align: center; }
   .hero-art { order: -1; margin: 0 auto; }
 }
@@ -142,14 +142,15 @@ img { display: block; max-width: 100%; }
   margin: 0 0 28px;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 840px) {
   .hero p.lead { margin-left: auto; margin-right: auto; }
 }
 
 .hero-download-block {
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
-  gap: 16px;
+  align-items: flex-start;
+  gap: 14px;
   margin-bottom: 20px;
 }
 
@@ -160,21 +161,35 @@ img { display: block; max-width: 100%; }
   align-items: center;
 }
 
-@media (max-width: 720px) {
-  .hero-download-block { align-items: center; }
-  .cta-row { justify-content: center; }
+@media (max-width: 840px) {
+  .hero-download-block {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cta-row {
+    justify-content: center;
+    width: 100%;
+  }
 }
 
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 13px 22px;
+  height: 54px;
+  padding: 0 22px;
   border-radius: 14px;
   font-weight: 700;
   font-size: 15px;
+  line-height: 1;
   text-decoration: none;
-  border: 2px solid transparent;
+  border: 1.5px solid transparent;
+  box-sizing: border-box;
   transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -185,28 +200,33 @@ img { display: block; max-width: 100%; }
 .btn-dark:hover { background: #10151f; color: #fff; transform: translateY(-1px); }
 
 .btn-outline {
-  background: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.45);
   color: var(--navy-deep);
-  border-color: rgba(46, 58, 80, 0.3);
+  border-color: rgba(46, 58, 80, 0.28);
+  box-shadow: 0 4px 14px rgba(46, 58, 80, 0.08);
 }
 .btn-outline:hover {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.75);
   color: var(--navy-deep);
   transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(46, 58, 80, 0.12);
 }
 
 /* App Store Badge Button */
 .btn-appstore {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
+  height: 54px;
   background: #000000;
   color: #ffffff !important;
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 14px;
-  padding: 10px 18px;
+  padding: 0 18px;
   text-decoration: none;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  box-sizing: border-box;
   transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
   user-select: none;
 }
@@ -249,16 +269,25 @@ img { display: block; max-width: 100%; }
 
 /* Hero QR Badge */
 .hero-qr-badge {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   background: rgba(255, 255, 255, 0.65);
   backdrop-filter: saturate(180%) blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 16px;
   padding: 8px 16px 8px 10px;
-  width: fit-content;
+  width: 100%;
+  box-sizing: border-box;
   box-shadow: 0 4px 16px rgba(46, 58, 80, 0.08);
+  text-decoration: none;
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hero-qr-badge:hover {
+  background: rgba(255, 255, 255, 0.85);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(46, 58, 80, 0.12);
 }
 
 .hero-qr-badge img {
@@ -1270,10 +1299,11 @@ footer nav a:hover { color: var(--coral); }
 .btn-outline-white {
   background: transparent;
   color: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.45);
 }
 .btn-outline-white:hover {
   background: rgba(255, 255, 255, 0.15);
   border-color: #ffffff;
   color: #ffffff;
+  transform: translateY(-1px);
 }
